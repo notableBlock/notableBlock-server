@@ -31,9 +31,9 @@ router.post("/", async (req, res) => {
     }
 
     res.status(200).json({ message: "사용자 정보 저장 완료", user });
-  } catch (error) {
-    console.error("사용자 정보 저장 중 오류 발생:", error);
-    res.status(500).json({ error: "서버 오류" });
+  } catch (err) {
+    console.error("사용자 정보 저장 중 오류 발생:", err);
+    res.status(500).json({ err: "서버 오류", message: err.message });
   }
 });
 

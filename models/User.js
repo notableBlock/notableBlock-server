@@ -9,4 +9,6 @@ const userSchema = new mongoose.Schema({
   notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Notification" }],
 });
 
+userSchema.set("timestamps", { createdAt: true, updatedAt: false });
+
 module.exports = mongoose.model("User", userSchema);

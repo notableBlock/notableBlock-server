@@ -1,15 +1,29 @@
 const mongoose = require("mongoose");
 
 const noteSchema = new mongoose.Schema({
-  blockchainRef: { type: String, required: true },
-  title: { type: String, index: true },
-  content: { type: String, required: true, index: true },
-  tags: [{ type: String, index: true }],
-  images: [String],
+  creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  editor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  blockchainRef: { type: String },
+  blocks: [
+    {
+      tag: {
+        type: String,
+        required: true,
+      },
+      html: {
+        type: String,
+        required: false,
+      },
+      imageUrl: {
+        type: String,
+        required: false,
+      },
+    },
+  ],
   baseNote: { type: mongoose.Schema.Types.ObjectId, ref: "Note" },
   shared: { type: Boolean, required: true },
 });
 
-noteSchema.index({ title: "text", content: "text", tags: "text" });
+noteSchema.set("timestamps", true);
 
 module.exports = mongoose.model("Note", noteSchema);
