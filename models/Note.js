@@ -1,8 +1,11 @@
 const mongoose = require("mongoose");
 
 const noteSchema = new mongoose.Schema({
-  creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  editor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  creator: { type: mongoose.Schema.Types.String, ref: "User" },
+  creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  creatorPicture: { type: mongoose.Schema.Types.String, ref: "User" },
+  editor: { type: mongoose.Schema.Types.String, ref: "User" },
+  editorPicture: { type: mongoose.Schema.Types.String, ref: "User" },
   blockchainRef: { type: String },
   blocks: [
     {
@@ -22,8 +25,8 @@ const noteSchema = new mongoose.Schema({
   ],
   baseNote: { type: mongoose.Schema.Types.ObjectId, ref: "Note" },
   shared: { type: Boolean, required: true },
+  createdAt: { type: String, required: true },
+  updatedAt: String,
 });
-
-noteSchema.set("timestamps", true);
 
 module.exports = mongoose.model("Note", noteSchema);
