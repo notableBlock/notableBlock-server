@@ -1,6 +1,7 @@
 const createError = require("http-errors");
 
 const Note = require("../models/Note");
+const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
 const getCurrentDate = require("../utils/getCurrentDate");
@@ -15,8 +16,10 @@ const getNotes = async (req, res, next) => {
     });
   } catch (err) {
     next(createError(500, "노트를 가져오는데 실패했습니다."));
+    return;
   }
 };
+
 const createNote = async (req, res, next) => {
   const { user } = req;
 
@@ -36,9 +39,48 @@ const createNote = async (req, res, next) => {
     user.notes.push(savedNote._id);
 
     await user.save();
-    res.status(201).send({ noteId: savedNote._id.toString() });
+    res.status(201).json({ noteId: savedNote._id.toString() });
   } catch (err) {
     next(createError(500, "노트를 생성하는데 실패했습니다."));
+    return;
+  }
+};
+
+const deleteNote = async (req, res, next) => {
+  const { _id: userId } = req.user;
+  const { noteId } = req.params;
+
+  try {
+    const note = await Note.findById(noteId);
+    if (!note) {
+      next(createError(404, "노트를 찾을 수 없습니다."));
+      return;
+    }
+
+    if (userId.toString() === note.creatorId.toString()) {
+      const deletedNote = await Note.findByIdAndDelete(noteId);
+      if (!deletedNote) {
+        next(createError(404, "삭제할 노트를 찾을 수 없습니다."));
+        return;
+      }
+
+      const user = await User.findById(userId);
+      if (!user) {
+        next(createError(404, "사용자를 찾을 수 없습니다."));
+        return;
+      }
+
+      const index = user.notes.indexOf(deletedNote._id);
+      if (index !== -1) {
+        user.notes.splice(index, 1);
+        await user.save();
+      }
+
+      res.status(200).json({ message: "노트를 삭제했습니다." });
+    }
+  } catch (err) {
+    next(createError(500, "노트를 삭제하는데 실패했습니다."));
+    return;
   }
 };
 
@@ -56,7 +98,8 @@ const updateNote = async (req, res, next) => {
     await note.save();
     res.status(200).json({ message: "노트가 업데이트 되었습니다." });
   } catch (err) {
-    next(createError(500, "노트 업데이트에 실패했습니다."));
+    next(createError(500, "노트를 업데이트하는데 실패했습니다."));
+    return;
   }
 };
 
@@ -68,7 +111,8 @@ const showNotes = async (req, res, next) => {
     res.status(200).json(note);
   } catch (err) {
     next(createError(500, "노트를 찾을 수 없습니다."));
+    return;
   }
 };
 
-module.exports = { getNotes, createNote, updateNote, showNotes };
+module.exports = { getNotes, createNote, updateNote, deleteNote, showNotes };
