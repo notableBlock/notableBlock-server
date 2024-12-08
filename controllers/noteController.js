@@ -89,13 +89,22 @@ const updateNote = async (req, res, next) => {
   const { noteId, blocks } = req.body.data;
 
   try {
-    const note = await findNoteById(noteId);
-    note.blocks = blocks;
-    note.updatedAt = getCurrentDate();
-    note.editor = name;
-    note.editorPicture = picture;
+    const updatedNote = await Note.findByIdAndUpdate(
+      noteId,
+      {
+        blocks,
+        updatedAt: getCurrentDate(),
+        editor: name,
+        editorPicture: picture,
+      },
+      { new: true }
+    );
 
-    await note.save();
+    if (!updatedNote) {
+      next(createError(404, "노트를 찾을 수 없습니다."));
+      return;
+    }
+
     res.status(200).json({ message: "노트가 업데이트 되었습니다." });
   } catch (err) {
     next(createError(500, "노트를 업데이트하는데 실패했습니다."));
