@@ -12,6 +12,7 @@ const mongoose = require("mongoose");
 const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
 const notesRouter = require("./routes/notes");
+const sharedRouter = require("./routes/shared");
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/notes", notesRouter);
+app.use("/shared", sharedRouter);
 
 app.use((req, res, next) => {
   next(createError(404));

@@ -11,7 +11,6 @@ const getNotes = async (req, res, next) => {
 
   try {
     res.status(200).json({
-      message: "사용자의 노트를 가져왔습니다.",
       notesId: user.notes ? user.notes.map((note) => note.toString()) : [],
     });
   } catch (err) {
@@ -112,7 +111,24 @@ const updateNote = async (req, res, next) => {
   }
 };
 
-const showNotes = async (req, res, next) => {
+const shareNote = async (req, res, next) => {
+  const { noteId } = req.params;
+
+  try {
+    const sharedNote = await findNoteById(noteId);
+
+    sharedNote.shared = !sharedNote.shared;
+    await sharedNote.save();
+
+    const message = sharedNote.shared ? "노트를 공유했습니다" : "노트 공유를 취소했습니다.";
+    res.status(200).json({ note: sharedNote, message });
+  } catch (err) {
+    next(createError(500, "노트를 공유하는데 실패했습니다."));
+    return;
+  }
+};
+
+const showNote = async (req, res, next) => {
   const { noteId } = req.params;
 
   try {
@@ -124,4 +140,4 @@ const showNotes = async (req, res, next) => {
   }
 };
 
-module.exports = { getNotes, createNote, updateNote, deleteNote, showNotes };
+module.exports = { getNotes, createNote, updateNote, deleteNote, shareNote, showNote };

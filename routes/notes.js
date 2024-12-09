@@ -1,6 +1,6 @@
 const express = require("express");
 
-const { getNotes, createNote, updateNote, deleteNote, showNotes } = require("../controllers/noteController");
+const { getNotes, createNote, updateNote, deleteNote, shareNote,showNote } = require("../controllers/noteController");
 const isAuthenticated = require("../middlewares/auth");
 
 const router = express.Router();
@@ -15,6 +15,8 @@ router.put("/", updateNote);
 
 router.delete("/:noteId", deleteNote);
 
-router.get("/:noteId", showNotes);
+router.patch("/:noteId", shareNote);
+
+router.get("/:noteId", showNote);
 
 module.exports = router;
