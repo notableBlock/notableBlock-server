@@ -4,6 +4,7 @@ const Note = require("../models/Note");
 const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
+const convertBlockToMarkdown = require("../utils/convertBlockToMarkdown");
 const getCurrentDate = require("../utils/getCurrentDate");
 
 const getNotes = async (req, res, next) => {
@@ -92,6 +93,7 @@ const updateNote = async (req, res, next) => {
       noteId,
       {
         blocks,
+        id: blocks.id,
         updatedAt: getCurrentDate(),
         editor: name,
         editorPicture: picture,
@@ -140,4 +142,22 @@ const showNote = async (req, res, next) => {
   }
 };
 
-module.exports = { getNotes, createNote, updateNote, deleteNote, shareNote, showNote };
+const exportNote = async (req, res, next) => {
+  const { noteId } = req.params;
+
+  try {
+    const note = await findNoteById(noteId);
+    const { blocks } = note;
+
+    const markdown = convertBlockToMarkdown(blocks);
+
+    res.setHeader("Content-Disposition", "attachment; filename=note.md");
+    res.setHeader("Content-Type", "text/markdown");
+    res.status(200).send(markdown);
+  } catch (err) {
+    next(createError(500, "노트를 로컬로 내보내는데 실패했습니다."));
+    return;
+  }
+};
+
+module.exports = { getNotes, createNote, updateNote, deleteNote, shareNote, showNote, exportNote };
