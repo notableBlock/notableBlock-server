@@ -4,7 +4,7 @@ const Note = require("../models/Note");
 const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
-const convertBlockToMarkdown = require("../utils/convertBlockToMarkdown");
+const convertBlockToMarkdown = require("../utils/convertBlock");
 const getCurrentDate = require("../utils/getCurrentDate");
 
 const getNotes = async (req, res, next) => {
@@ -160,4 +160,39 @@ const exportNote = async (req, res, next) => {
   }
 };
 
-module.exports = { getNotes, createNote, updateNote, deleteNote, shareNote, showNote, exportNote };
+const importNote = async (req, res, next) => {
+  const { user, convertedMarkdown } = req;
+
+  try {
+    const localNote = new Note({
+      creatorId: user._id,
+      creator: user.name,
+      creatorPicture: user.picture,
+      blocks: convertedMarkdown,
+      shared: false,
+      createdAt: getCurrentDate(),
+      editor: user.name,
+      editorPicture: user.picture,
+    });
+
+    const savedNote = await localNote.save();
+    user.notes.push(savedNote._id);
+
+    await user.save();
+    res.status(201).json({ note: savedNote, message: "노트를 로컬에서 가져왔습니다." });
+  } catch (err) {
+    next(createError(500, "노트를 로컬에서 가져오는데 실패했습니다."));
+    return;
+  }
+};
+
+module.exports = {
+  getNotes,
+  createNote,
+  updateNote,
+  deleteNote,
+  shareNote,
+  showNote,
+  exportNote,
+  importNote,
+};

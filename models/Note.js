@@ -9,6 +9,8 @@ const noteSchema = new mongoose.Schema({
   blockchainRef: { type: String },
   blocks: [
     {
+      _id: false,
+      id: { type: String, required: true },
       tag: {
         type: String,
         required: true,
