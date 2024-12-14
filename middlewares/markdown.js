@@ -1,7 +1,7 @@
 const fs = require("fs");
 const createError = require("http-errors");
 
-const { convertMarkdownToBlock } = require("../utils/convertBlock");
+const { markdownToBlock } = require("../utils/convertBlock");
 
 const convertMarkdown = (req, res, next) => {
   const filePath = req.file.path;
@@ -12,7 +12,7 @@ const convertMarkdown = (req, res, next) => {
       return;
     }
 
-    const convertedMarkdown = convertMarkdownToBlock(data);
+    const convertedMarkdown = markdownToBlock(data);
     req.convertedMarkdown = convertedMarkdown;
 
     fs.unlink(filePath, (err) => {
