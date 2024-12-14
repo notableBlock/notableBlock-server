@@ -4,7 +4,8 @@ const Note = require("../models/Note");
 const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
-const convertBlockToMarkdown = require("../utils/convertBlock");
+const { createNoteData, createAndSaveNote } = require("../services/noteServices");
+const { blockToMarkdown } = require("../utils/convertBlock");
 const getCurrentDate = require("../utils/getCurrentDate");
 
 const getNotes = async (req, res, next) => {
@@ -144,42 +145,43 @@ const showNote = async (req, res, next) => {
 
 const exportNote = async (req, res, next) => {
   const { noteId } = req.params;
+  const { zwcCreatorId, zwcNoteId } = req.zwcId;
 
   try {
     const note = await findNoteById(noteId);
     const { blocks } = note;
+    const markdown = blockToMarkdown(blocks, zwcCreatorId, zwcNoteId);
 
-    const markdown = convertBlockToMarkdown(blocks);
-
-    res.setHeader("Content-Disposition", "attachment; filename=note.md");
+    res.setHeader("Content-Disposition", `attachment; filename="${noteId}.md"`);
     res.setHeader("Content-Type", "text/markdown");
-    res.status(200).send(markdown);
+    res.send(markdown);
   } catch (err) {
     next(createError(500, "노트를 로컬로 내보내는데 실패했습니다."));
-    return;
   }
 };
 
 const importNote = async (req, res, next) => {
   const { user, convertedMarkdown } = req;
+  let noteData;
 
   try {
-    const localNote = new Note({
-      creatorId: user._id,
-      creator: user.name,
-      creatorPicture: user.picture,
-      blocks: convertedMarkdown,
-      shared: false,
-      createdAt: getCurrentDate(),
-      editor: user.name,
-      editorPicture: user.picture,
+    if (req.idFromBlockchain) {
+      const { decodedCreatorId, decodedNoteId } = req.idFromBlockchain;
+      const creator = await User.findById(decodedCreatorId);
+      noteData = await createNoteData(creator, convertedMarkdown);
+
+      noteData.baseNote = decodedNoteId;
+    } else {
+      noteData = await createNoteData(user, convertedMarkdown);
+    }
+
+    const savedNote = await createAndSaveNote(noteData, user);
+    res.status(201).json({
+      note: savedNote,
+      message: req.idFromBlockchain
+        ? "원본이 있는 노트를 로컬에서 가져왔습니다."
+        : "새 노트를 로컬에서 가져왔습니다.",
     });
-
-    const savedNote = await localNote.save();
-    user.notes.push(savedNote._id);
-
-    await user.save();
-    res.status(201).json({ note: savedNote, message: "노트를 로컬에서 가져왔습니다." });
   } catch (err) {
     next(createError(500, "노트를 로컬에서 가져오는데 실패했습니다."));
     return;

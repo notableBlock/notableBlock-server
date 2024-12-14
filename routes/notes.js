@@ -12,8 +12,10 @@ const {
 } = require("../controllers/noteController");
 
 const isAuthenticated = require("../middlewares/auth");
-const upload = require("../middlewares/upload");
-const convertMarkdown = require("../middlewares/convertMarkdown");
+const uploads = require("../middlewares/uploads");
+const convertMarkdown = require("../middlewares/markdown");
+const { convertIdToBlockchain, convertBlockchainToId } = require("../middlewares/blockchain");
+const { convertIdToZeroWidth, convertZeroWidthToId } = require("../middlewares/zeroWidthSpace");
 
 const router = express.Router();
 
@@ -31,8 +33,15 @@ router.patch("/:noteId", shareNote);
 
 router.get("/:noteId", showNote);
 
-router.get("/:noteId/download", exportNote);
+router.get("/:noteId/download", convertIdToBlockchain, convertIdToZeroWidth, exportNote);
 
-router.post("/upload", upload.single("file"), convertMarkdown, importNote);
+router.post(
+  "/uploads",
+  uploads.single("file"),
+  convertZeroWidthToId,
+  convertBlockchainToId,
+  convertMarkdown,
+  importNote
+);
 
 module.exports = router;
