@@ -1,8 +1,10 @@
 const createError = require("http-errors");
 
 const Note = require("../models/Note");
+const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
+const { createNoteData, createAndSaveNote } = require("../services/noteServices");
 
 const getSharedNotes = async (req, res, next) => {
   try {
@@ -33,4 +35,21 @@ const showSharedNote = async (req, res, next) => {
   }
 };
 
-module.exports = { getSharedNotes, showSharedNote };
+const copySharedNote = async (req, res, next) => {
+  const { user } = req;
+  const { noteId } = req.params;
+
+  try {
+    const originalNote = await findNoteById(noteId);
+    const creator = await User.findById(originalNote.creatorId);
+
+    const copiedNote = await createNoteData(creator, originalNote, user);
+    const savedNote = await createAndSaveNote(copiedNote, user);
+    res.status(201).json({ noteId: savedNote._id.toString() });
+  } catch (err) {
+    next(createError(500, "공유 노트를 내 노트로 가져오는데 실패했습니다."));
+    return;
+  }
+};
+
+module.exports = { getSharedNotes, showSharedNote, copySharedNote };
