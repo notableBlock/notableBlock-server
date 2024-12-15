@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema({
-  recipient: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  note: { type: mongoose.Schema.Types.ObjectId, ref: "Note", required: true },
+  recipientId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  link: String,
   message: { type: String, required: true },
-  receivedAt: { type: Date, default: Date.now },
+  receivedAt: String,
 });
 
 module.exports = mongoose.model("Notification", notificationSchema);

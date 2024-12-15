@@ -13,6 +13,7 @@ const indexRouter = require("./routes/index");
 const usersRouter = require("./routes/users");
 const notesRouter = require("./routes/notes");
 const sharedRouter = require("./routes/shared");
+const notificationRouter = require("./routes/notification");
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/notes", notesRouter);
 app.use("/shared", sharedRouter);
+app.use("/notification", notificationRouter);
 
 app.use((req, res, next) => {
   next(createError(404));

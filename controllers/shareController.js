@@ -5,6 +5,7 @@ const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
 const { createNoteData, createAndSaveNote } = require("../services/noteServices");
+const { createNotificationData, saveNotification } = require("../services/notificationServices");
 
 const getSharedNotes = async (req, res, next) => {
   try {
@@ -45,6 +46,15 @@ const copySharedNote = async (req, res, next) => {
 
     const copiedNote = await createNoteData(creator, originalNote, user);
     const savedNote = await createAndSaveNote(copiedNote, user);
+
+    const newNotification = await createNotificationData(
+      user._id,
+      savedNote._id,
+      "를 내 노트로 가져왔습니다.",
+      "notes"
+    );
+    await saveNotification(newNotification, user);
+
     res.status(201).json({ noteId: savedNote._id.toString() });
   } catch (err) {
     next(createError(500, "공유 노트를 내 노트로 가져오는데 실패했습니다."));

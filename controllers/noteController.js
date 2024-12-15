@@ -5,6 +5,7 @@ const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
 const { createNoteData, createAndSaveNote } = require("../services/noteServices");
+const { createNotificationData, saveNotification } = require("../services/notificationServices");
 const { blockToMarkdown } = require("../utils/convertBlock");
 const getCurrentDate = require("../utils/getCurrentDate");
 
@@ -39,7 +40,13 @@ const createNote = async (req, res, next) => {
     const savedNote = await newNote.save();
     user.notes.push(savedNote._id);
 
-    await user.save();
+    const newNotification = await createNotificationData(
+      user._id,
+      savedNote._id,
+      "노트가 생성되었습니다."
+    );
+    await saveNotification(newNotification, user);
+
     res.status(201).json({ noteId: savedNote._id.toString() });
   } catch (err) {
     next(createError(500, "노트를 생성하는데 실패했습니다."));
@@ -76,6 +83,13 @@ const deleteNote = async (req, res, next) => {
         user.notes.splice(index, 1);
         await user.save();
       }
+
+      const newNotification = await createNotificationData(
+        user._id,
+        deletedNote._id,
+        "노트가 삭제되었습니다."
+      );
+      await saveNotification(newNotification, user);
 
       res.status(200).json({ message: "노트를 삭제했습니다." });
     }
@@ -116,14 +130,38 @@ const updateNote = async (req, res, next) => {
 
 const shareNote = async (req, res, next) => {
   const { noteId } = req.params;
+  const { user } = req;
 
   try {
     const sharedNote = await findNoteById(noteId);
-
     sharedNote.shared = !sharedNote.shared;
     await sharedNote.save();
 
     const message = sharedNote.shared ? "노트를 공유했습니다" : "노트 공유를 취소했습니다.";
+    const path = sharedNote.shared ? "shared" : null;
+
+    const notifications = [{ userId: user._id, noteId: sharedNote._id, message, path }];
+    if (user._id.toString() !== sharedNote.creatorId.toString()) {
+      notifications.push({
+        userId: sharedNote.creatorId,
+        noteId: sharedNote._id,
+        message: `내 노트를 ${user.name}이 다시 공유했습니다.`,
+        path: "shared",
+      });
+    }
+
+    for (const notification of notifications) {
+      const notificationData = await createNotificationData(
+        notification.userId,
+        notification.noteId,
+        notification.message,
+        notification.path
+      );
+
+      const recipient = await User.findById(notification.userId);
+      await saveNotification(notificationData, recipient);
+    }
+
     res.status(200).json({ note: sharedNote, message });
   } catch (err) {
     next(createError(500, "노트를 공유하는데 실패했습니다."));
@@ -144,6 +182,7 @@ const showNote = async (req, res, next) => {
 };
 
 const exportNote = async (req, res, next) => {
+  const { user } = req;
   const { noteId } = req.params;
   const { zwcCreatorId, zwcNoteId } = req.zwcId;
 
@@ -151,6 +190,14 @@ const exportNote = async (req, res, next) => {
     const note = await findNoteById(noteId);
     const { blocks } = note;
     const markdown = blockToMarkdown(blocks, zwcCreatorId, zwcNoteId);
+
+    const newNotification = await createNotificationData(
+      user._id,
+      noteId,
+      "노트를 로컬로 내보냈습니다."
+    );
+
+    await saveNotification(newNotification, user);
 
     res.setHeader("Content-Disposition", `attachment; filename="${noteId}.md"`);
     res.setHeader("Content-Type", "text/markdown");
@@ -162,25 +209,46 @@ const exportNote = async (req, res, next) => {
 
 const importNote = async (req, res, next) => {
   const { user, convertedMarkdown } = req;
-  let noteData;
 
   try {
-    if (req.idFromBlockchain) {
-      const { decodedCreatorId, decodedNoteId } = req.idFromBlockchain;
-      const creator = await User.findById(decodedCreatorId);
-      noteData = await createNoteData(creator, convertedMarkdown);
+    const isIdFromBlockchain = req.idFromBlockchain;
+    const creatorId = isIdFromBlockchain ? req.idFromBlockchain.decodedCreatorId : user._id;
+    const noteId = isIdFromBlockchain ? req.idFromBlockchain.decodedNoteId : null;
+    const message = isIdFromBlockchain
+      ? "원본이 있는 노트를 로컬에서 가져왔습니다."
+      : "새 노트를 로컬에서 가져왔습니다.";
 
-      noteData.baseNote = decodedNoteId;
-    } else {
-      noteData = await createNoteData(user, convertedMarkdown);
-    }
+    const creator = await User.findById(creatorId);
+    const noteData = await createNoteData(creator, convertedMarkdown);
+
+    if (isIdFromBlockchain) noteData.baseNote = noteId;
 
     const savedNote = await createAndSaveNote(noteData, user);
+    const notifications = [{ userId: user._id, noteId: savedNote._id, message, path: "notes" }];
+
+    if (isIdFromBlockchain && user._id.toString() !== creator._id.toString()) {
+      notifications.push({
+        userId: creator._id,
+        noteId: savedNote._id,
+        message: `내 노트를 ${user.name}이 다시 업로드 하였습니다.`,
+      });
+    }
+
+    for (const notification of notifications) {
+      const notificationData = await createNotificationData(
+        notification.userId,
+        notification.noteId,
+        notification.message,
+        notification.path
+      );
+
+      const recipient = await User.findById(notification.userId);
+      await saveNotification(notificationData, recipient);
+    }
+
     res.status(201).json({
       note: savedNote,
-      message: req.idFromBlockchain
-        ? "원본이 있는 노트를 로컬에서 가져왔습니다."
-        : "새 노트를 로컬에서 가져왔습니다.",
+      message: message,
     });
   } catch (err) {
     next(createError(500, "노트를 로컬에서 가져오는데 실패했습니다."));
