@@ -18,10 +18,23 @@ const sendNotification = async (req, res, next) => {
       notificationStream.close();
       res.end();
     });
-  } catch (error) {
-    next(createError(500, "알림을 생성하는데 실패했습니다."))
+  } catch (err) {
+    next(createError(500, "알림을 생성하는데 실패했습니다."));
     return;
   }
 };
 
-module.exports = { sendNotification };
+const deleteNotification = async (req, res, next) => {
+  const { notificationId } = req.params;
+
+  try {
+    await Notification.findByIdAndDelete(notificationId);
+
+    res.status(200).json({ message: "알림을 삭제했습니다." });
+  } catch (err) {
+    next(createError(500, "알림을 삭제하는데 실패했습니다."));
+    return;
+  }
+};
+
+module.exports = { sendNotification, deleteNotification };
