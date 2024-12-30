@@ -83,4 +83,23 @@ const deleteNotification = async (req, res, next) => {
   }
 };
 
-module.exports = { sendNotification, getNotification, showNotification, deleteNotification };
+const deleteAllNotification = async (req, res, next) => {
+  const { _id: userId } = req.user;
+
+  try {
+    await Notification.deleteMany({ recipientId: userId });
+    await User.findByIdAndUpdate(userId, { notifications: [] });
+
+    res.status(200).json({ message: "모든 알림이 삭제되었습니다." });
+  } catch (err) {
+    next(createError(500, "전체 알림을 삭제하는데 실패했습니다."));
+  }
+};
+
+module.exports = {
+  sendNotification,
+  getNotification,
+  showNotification,
+  deleteNotification,
+  deleteAllNotification,
+};

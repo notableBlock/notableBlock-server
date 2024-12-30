@@ -5,6 +5,7 @@ const {
   getNotification,
   showNotification,
   deleteNotification,
+  deleteAllNotification,
 } = require("../controllers/notificationController");
 
 const isAuthenticated = require("../middlewares/auth");
@@ -14,6 +15,8 @@ const router = express.Router();
 router.use(isAuthenticated);
 
 router.get("/", getNotification);
+
+router.delete("/", deleteAllNotification);
 
 router.get("/live", sendNotification);
 
