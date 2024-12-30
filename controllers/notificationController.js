@@ -25,6 +25,33 @@ const sendNotification = async (req, res, next) => {
   }
 };
 
+const getNotification = async (req, res, next) => {
+  const { user } = req;
+
+  try {
+    res.status(200).json({
+      notificationsId: user.notifications
+        ? user.notifications.map((notification) => notification.toString())
+        : [],
+    });
+  } catch (err) {
+    next(createError(500, "알림을 가져오는데 실패했습니다."));
+    return;
+  }
+};
+
+const showNotification = async (req, res, next) => {
+  const { notificationId } = req.params;
+
+  try {
+    const notification = await Notification.findById(notificationId);
+    res.status(200).json(notification);
+  } catch (err) {
+    next(createError(500, "알림을 찾을 수 없습니다."));
+    return;
+  }
+};
+
 const deleteNotification = async (req, res, next) => {
   const { _id: userId } = req.user;
   const { notificationId } = req.params;
@@ -56,4 +83,4 @@ const deleteNotification = async (req, res, next) => {
   }
 };
 
-module.exports = { sendNotification, deleteNotification };
+module.exports = { sendNotification, getNotification, showNotification, deleteNotification };
