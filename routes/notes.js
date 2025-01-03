@@ -7,6 +7,7 @@ const {
   deleteNote,
   shareNote,
   showNote,
+  uploadImageToNote,
   exportNote,
   importNote,
 } = require("../controllers/noteController");
@@ -32,6 +33,8 @@ router.delete("/:noteId", deleteNote);
 router.patch("/:noteId", shareNote);
 
 router.get("/:noteId", showNote);
+
+router.post("/:noteId/images", uploads.single("file"), uploadImageToNote);
 
 router.get("/:noteId/download", convertIdToBlockchain, convertIdToZeroWidth, exportNote);
 
