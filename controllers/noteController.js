@@ -1,4 +1,5 @@
 const createError = require("http-errors");
+const path = require("path");
 
 const Note = require("../models/Note");
 const User = require("../models/User");
@@ -6,6 +7,7 @@ const User = require("../models/User");
 const findNoteById = require("../services/findNoteById");
 const { createNoteData, createAndSaveNote } = require("../services/noteServices");
 const { createNotificationData, saveNotification } = require("../services/notificationServices");
+const clearImage = require("../services/uploadsService");
 const { blockToMarkdown } = require("../utils/convertBlock");
 const getCurrentDate = require("../utils/getCurrentDate");
 
@@ -182,7 +184,7 @@ const showNote = async (req, res, next) => {
 };
 
 const uploadImageToNote = async (req, res, next) => {
-  const imageURL = `/uploads/${req.file.filename}`;
+  const imageURL = `/uploads/images/${req.file.filename}`;
 
   try {
     res.status(200).json({
@@ -191,6 +193,25 @@ const uploadImageToNote = async (req, res, next) => {
     });
   } catch (err) {
     next(createError(500, "이미지를 첨부하는데 실패했습니다."));
+    return;
+  }
+};
+
+const removeImageFromNote = async (req, res, next) => {
+  const imageName = req.params.imageName;
+
+  if (!imageName) {
+    next(createError(404, "이미지를 찾을 수 없습니다."));
+    return;
+  }
+
+  try {
+    const imagePath = `images/${imageName}`;
+    clearImage(imagePath);
+
+    res.status(200).json({ message: "이미지가 정상적으로 삭제되었습니다." });
+  } catch (err) {
+    next(createError(500, "이미지를 삭제하는데 실패했습니다."));
     return;
   }
 };
@@ -278,6 +299,7 @@ module.exports = {
   shareNote,
   showNote,
   uploadImageToNote,
+  removeImageFromNote,
   exportNote,
   importNote,
 };
