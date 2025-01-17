@@ -18,7 +18,7 @@ const noteSchema = new mongoose.Schema({
       html: {
         type: String,
       },
-      imageURL: {
+      imageUrl: {
         type: String,
       },
     },

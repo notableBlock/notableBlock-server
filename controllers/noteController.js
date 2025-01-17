@@ -184,12 +184,12 @@ const showNote = async (req, res, next) => {
 };
 
 const uploadImageToNote = async (req, res, next) => {
-  const imageURL = `/uploads/images/${req.file.filename}`;
+  const imageUrl = `/uploads/images/${req.file.filename}`;
 
   try {
     res.status(200).json({
       message: "이미지를 첨부하는데 성공했습니다.",
-      imageURL: imageURL,
+      imageUrl: imageUrl,
     });
   } catch (err) {
     next(createError(500, "이미지를 첨부하는데 실패했습니다."));
