@@ -34,6 +34,7 @@ if (process.env.NODE_ENV === "production") {
 const corsOptions = {
   origin: process.env.CLIENT_URL,
   credentials: true,
+  exposedHeaders: ["Content-Disposition"],
 };
 
 app.use(cors(corsOptions));

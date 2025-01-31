@@ -45,7 +45,9 @@ const createNote = async (req, res, next) => {
     const newNotification = await createNotificationData(
       user._id,
       savedNote._id,
-      "노트가 생성되었습니다."
+      "가 생성되었습니다. 📝",
+      undefined,
+      "새로운 노트"
     );
     await saveNotification(newNotification, user);
 
@@ -69,6 +71,10 @@ const deleteNote = async (req, res, next) => {
 
     if (userId.toString() === note.creatorId.toString()) {
       const deletedNote = await Note.findByIdAndDelete(noteId);
+      const title =
+        (deletedNote.blocks.find((block) => ["h1", "h2", "h3", "p"].includes(block.tag))?.html ??
+          "제목이 없는") + " 노트";
+
       if (!deletedNote) {
         next(createError(404, "삭제할 노트를 찾을 수 없습니다."));
         return;
@@ -89,7 +95,9 @@ const deleteNote = async (req, res, next) => {
       const newNotification = await createNotificationData(
         user._id,
         deletedNote._id,
-        "노트가 삭제되었습니다."
+        "가 삭제되었습니다. 🗑️",
+        undefined,
+        title
       );
       await saveNotification(newNotification, user);
 
@@ -136,10 +144,13 @@ const shareNote = async (req, res, next) => {
 
   try {
     const sharedNote = await findNoteById(noteId);
+    const title =
+      (sharedNote.blocks.find((block) => ["h1", "h2", "h3", "p"].includes(block.tag))?.html ??
+        "제목이 없는") + " 노트";
     sharedNote.shared = !sharedNote.shared;
     await sharedNote.save();
 
-    const message = sharedNote.shared ? "노트를 공유했습니다" : "노트 공유를 취소했습니다.";
+    const message = sharedNote.shared ? "를 공유했습니다 🔗" : "공유를 취소했습니다. 🔒";
     const path = sharedNote.shared ? "shared" : null;
 
     const notifications = [{ userId: user._id, noteId: sharedNote._id, message, path }];
@@ -147,7 +158,7 @@ const shareNote = async (req, res, next) => {
       notifications.push({
         userId: sharedNote.creatorId,
         noteId: sharedNote._id,
-        message: `내 노트를 ${user.name}이 다시 공유했습니다.`,
+        message: `내 노트를 ${user.name}이 다시 공유했습니다. 🔗`,
         path: "shared",
       });
     }
@@ -157,7 +168,8 @@ const shareNote = async (req, res, next) => {
         notification.userId,
         notification.noteId,
         notification.message,
-        notification.path
+        notification.path,
+        title
       );
 
       const recipient = await User.findById(notification.userId);
@@ -224,17 +236,25 @@ const exportNote = async (req, res, next) => {
   try {
     const note = await findNoteById(noteId);
     const { blocks } = note;
+    const title =
+      (blocks.find((block) => ["h1", "h2", "h3", "p"].includes(block.tag))?.html ?? "제목이 없는") +
+      " 노트";
     const markdown = blockToMarkdown(blocks, zwcCreatorId, zwcNoteId);
-
     const newNotification = await createNotificationData(
       user._id,
       noteId,
-      "노트를 로컬로 내보냈습니다."
+      "를 로컬로 내보냈습니다. 📤",
+      undefined,
+      title
     );
 
     await saveNotification(newNotification, user);
 
-    res.setHeader("Content-Disposition", `attachment; filename="${noteId}.md"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename*=UTF-8''${encodeURIComponent(title)}.md`
+    );
+    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
     res.setHeader("Content-Type", "text/markdown");
     res.send(markdown);
   } catch (err) {
@@ -250,8 +270,8 @@ const importNote = async (req, res, next) => {
     const creatorId = isIdFromBlockchain ? req.idFromBlockchain.decodedCreatorId : user._id;
     const noteId = isIdFromBlockchain ? req.idFromBlockchain.decodedNoteId : null;
     const message = isIdFromBlockchain
-      ? "원본이 있는 노트를 로컬에서 가져왔습니다."
-      : "새 노트를 로컬에서 가져왔습니다.";
+      ? "원본이 있는 노트를 로컬에서 가져왔습니다. 📥"
+      : "새 노트를 로컬에서 가져왔습니다. 📥";
 
     const creator = await User.findById(creatorId);
     const noteData = await createNoteData(creator, convertedMarkdown);
@@ -265,7 +285,7 @@ const importNote = async (req, res, next) => {
       notifications.push({
         userId: creator._id,
         noteId: savedNote._id,
-        message: `내 노트를 ${user.name}이 다시 업로드 하였습니다.`,
+        message: `내 노트를 ${user.name}이 다시 업로드 하였습니다. 📥`,
       });
     }
 
