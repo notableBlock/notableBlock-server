@@ -1,11 +1,14 @@
 const createError = require("http-errors");
 
+const User = require("../models/User");
+
 const { oauth2Client, getGoogleUser } = require("../services/googleAuth");
 const { findUser } = require("../services/findUser");
 
 const login = async (req, res, next) => {
   try {
     const { code } = req.body;
+
     const { user, access_token, refresh_token } = await getGoogleUser(code);
     const { sub: googleId, name, picture, email } = user;
 
@@ -20,29 +23,79 @@ const login = async (req, res, next) => {
     res.status(200).json({
       message: "로그인에 성공했습니다.",
       access_token: access_token,
-      profile: { googleId: savedUser.googleId, name: savedUser.name, picture: savedUser.picture },
+      profile: { name: savedUser.name, picture: savedUser.picture },
     });
   } catch (err) {
     next(createError(500, "로그인에 실패했습니다."));
+    return;
   }
 };
 
 const autoLogin = async (req, res, next) => {
-  const access_token = req.cookies.access_token || req.headers["authorization"];
-
   try {
+    const access_token = req.cookies.access_token || req.headers["authorization"];
+
     const verified = await oauth2Client.getTokenInfo(access_token);
 
     if (verified) {
       return res.status(200).json({
         message: "자동 로그인이 완료되었습니다.",
       });
-    } else {
-      return res.status(401).json({ message: "재로그인이 필요합니다." });
     }
   } catch (err) {
-    next(createError(500, "인증에 실패했습니다."));
+    console.log("Access Token이 만료되었습니다. Refresh Token을 이용해 갱신을 시도합니다.");
+
+    try {
+      const { refresh_token, _id: userId } = req.user;
+      if (!refresh_token) {
+        next(createError(401, "Refresh Token이 없어 재로그인이 필요합니다."));
+        return;
+      }
+
+      oauth2Client.setCredentials({ refresh_token: refresh_token });
+      const { credentials } = await oauth2Client.refreshAccessToken();
+
+      oauth2Client.setCredentials(credentials);
+      const newAccessToken = credentials.access_token;
+      const newRefreshToken = credentials.refresh_token || refresh_token;
+
+      if (credentials.refresh_token) {
+        await User.findByIdAndUpdate(userId, { refresh_token: newRefreshToken });
+      }
+
+      res.cookie("access_token", newAccessToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+      });
+
+      return res.status(200).json({
+        message: "자동 로그인이 완료되었습니다.",
+        access_token: newAccessToken,
+      });
+    } catch (err) {
+      next(createError(401, "자동 로그인에 실패해 재로그인이 필요합니다."));
+      return;
+    }
   }
 };
 
-module.exports = { login, autoLogin };
+const logout = async (req, res, next) => {
+  try {
+    const { _id: userId } = req.user;
+
+    await User.findByIdAndUpdate(userId, { refresh_token: "" });
+
+    res.clearCookie("access_token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+    res.status(200).json({ message: "로그아웃에 성공했습니다." });
+  } catch (err) {
+    next(createError(500, "로그아웃에 실패했습니다."));
+    return;
+  }
+};
+
+module.exports = { login, autoLogin, logout };
