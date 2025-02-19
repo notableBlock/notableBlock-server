@@ -22,12 +22,12 @@ const createNoteData = async (creator, note, editor = creator) => {
 };
 
 const createAndSaveNote = async (noteData, user) => {
-  const note = new Note(noteData);
-  const savedNote = await note.save();
-  user.notes.push(savedNote._id);
-  await user.save();
+    const note = new Note(noteData);
+    const savedNote = await note.save();
+    user.notes.push(savedNote._id);
+    await user.save();
 
-  return savedNote;
+    return savedNote;
 };
 
 module.exports = { createNoteData, createAndSaveNote };

@@ -15,9 +15,16 @@ const {
 
 const isAuthenticated = require("../middlewares/auth");
 const uploads = require("../middlewares/uploads");
-const convertMarkdown = require("../middlewares/markdown");
-const { convertIdToBlockchain, convertBlockchainToId } = require("../middlewares/blockchain");
-const { convertIdToZeroWidth, convertZeroWidthToId } = require("../middlewares/zeroWidthSpace");
+const convertMarkdownToBlocks = require("../middlewares/markdown");
+const {
+  convertIdsToBlockchain,
+  decodeBytesIdsToBlockchainIds,
+} = require("../middlewares/blockchain");
+const {
+  convertIdsToZwcIds,
+  convertZwcIdsToBytesIds,
+} = require("../middlewares/zeroWidthCharacter");
+const { extractTarAndReadIds } = require("../middlewares/shellCommand");
 
 const router = express.Router();
 
@@ -39,14 +46,15 @@ router.post("/:noteId/images", uploads.single("file"), uploadImageToNote);
 
 router.delete("/uploads/images/:imageName", removeImageFromNote);
 
-router.get("/:noteId/download", convertIdToBlockchain, convertIdToZeroWidth, exportNote);
+router.get("/:noteId/download", convertIdsToBlockchain, convertIdsToZwcIds, exportNote);
 
 router.post(
   "/uploads",
   uploads.single("file"),
-  convertZeroWidthToId,
-  convertBlockchainToId,
-  convertMarkdown,
+  extractTarAndReadIds,
+  convertZwcIdsToBytesIds,
+  decodeBytesIdsToBlockchainIds,
+  convertMarkdownToBlocks,
   importNote
 );
 

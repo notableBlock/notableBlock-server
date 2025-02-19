@@ -6,7 +6,7 @@ const idToBinary = (id) =>
     .map((char) => zeroPad(char.charCodeAt(0).toString(2)))
     .join(" ");
 
-const binaryToZeroWidth = (binary) =>
+const binaryToZwc = (binary) =>
   binary
     .split("")
     .map((binaryNum) => {
@@ -20,7 +20,14 @@ const binaryToZeroWidth = (binary) =>
     })
     .join("");
 
-const zeroWidthToBinary = (data) =>
+const convertToZwcId = (dataBaseId) => {
+  const binary = idToBinary(dataBaseId);
+  const zwcId = binaryToZwc(binary);
+
+  return zwcId;
+};
+
+const zwcToBinary = (data) =>
   data
     .split("")
     .map((char) => {
@@ -39,4 +46,11 @@ const binaryToId = (binary) =>
     .map((num) => String.fromCharCode(parseInt(num, 2)))
     .join("");
 
-module.exports = { idToBinary, binaryToZeroWidth, zeroWidthToBinary, binaryToId };
+const convertToBytesId = (encodedId) => {
+  const binary = zwcToBinary(encodedId);
+  const bytesId = binaryToId(binary);
+
+  return bytesId.slice(0, 66);
+};
+
+module.exports = { convertToZwcId, convertToBytesId };
