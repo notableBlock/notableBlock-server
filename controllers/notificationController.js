@@ -21,22 +21,20 @@ const sendNotification = async (req, res, next) => {
     });
   } catch (err) {
     next(createError(500, "알림을 생성하는데 실패했습니다."));
-    return;
   }
 };
 
 const getNotification = async (req, res, next) => {
-  const { user } = req;
+  const { notifications } = req.user;
 
   try {
     res.status(200).json({
-      notificationsId: user.notifications
-        ? user.notifications.map((notification) => notification.toString())
+      notificationsId: notifications
+        ? notifications.map((notification) => notification.toString())
         : [],
     });
   } catch (err) {
     next(createError(500, "알림을 가져오는데 실패했습니다."));
-    return;
   }
 };
 
@@ -48,7 +46,6 @@ const showNotification = async (req, res, next) => {
     res.status(200).json(notification);
   } catch (err) {
     next(createError(500, "알림을 찾을 수 없습니다."));
-    return;
   }
 };
 
@@ -59,14 +56,12 @@ const deleteNotification = async (req, res, next) => {
   try {
     const deletedNotification = await Notification.findByIdAndDelete(notificationId);
     if (!deletedNotification) {
-      next(createError(404, "삭제할 알림을 찾을 수 없습니다."));
-      return;
+      return next(createError(404, "삭제할 알림을 찾을 수 없습니다."));
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      next(createError(404, "사용자를 찾을 수 없습니다."));
-      return;
+      return next(createError(404, "사용자를 찾을 수 없습니다."));
     }
 
     const index = user.notifications.findIndex(
