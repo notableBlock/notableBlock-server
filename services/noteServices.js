@@ -1,13 +1,16 @@
 const createError = require("http-errors");
 
 const Note = require("../models/Note");
+const User = require("../models/User");
 
 const getCurrentDate = require("../utils/getCurrentDate");
 
-const createNoteData = async (creator, note, editor = creator) => {
-  if (!creator) next(createError(500, "노트를 생성하는데 실패했습니다."));
+const storeNote = async ({ creator, note, editor, baseNoteId = null }) => {
+  if (!creator) {
+    next(createError(500, "노트를 생성하는데 실패했습니다."));
+  }
 
-  return {
+  const savedNote = Note.create({
     creatorId: creator._id,
     creator: creator.name,
     creatorPicture: creator.picture,
@@ -16,18 +19,18 @@ const createNoteData = async (creator, note, editor = creator) => {
     createdAt: getCurrentDate(),
     editor: editor.name,
     editorPicture: editor.picture,
-    baseNote: note._id,
+    baseNote: baseNoteId,
     updatedAt: getCurrentDate(),
-  };
+  });
+
+  await User.updateOne(
+    { _id: editor._id },
+    {
+      $push: { notes: savedNote._id },
+    }
+  );
+
+  return savedNote;
 };
 
-const createAndSaveNote = async (noteData, user) => {
-    const note = new Note(noteData);
-    const savedNote = await note.save();
-    user.notes.push(savedNote._id);
-    await user.save();
-
-    return savedNote;
-};
-
-module.exports = { createNoteData, createAndSaveNote };
+module.exports = storeNote;

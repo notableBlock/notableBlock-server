@@ -7,7 +7,7 @@ const Note = require("../models/Note");
 const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
-const { createNoteData, createAndSaveNote } = require("../services/noteServices");
+const storeNote = require("../services/noteServices");
 const storeNotification = require("../services/notificationServices");
 const clearImage = require("../services/uploadsServices");
 const runCommand = require("../services/shellCommandServices");
@@ -283,13 +283,8 @@ const importNote = async (req, res, next) => {
       blockchainIds.map(async ({ decodedCreatorId, decodedNoteId }, index) => {
         const creatorId = decodedCreatorId || userId;
         const noteId = decodedNoteId || null;
+        const creator = (await User.findById(creatorId)) || user;
 
-        const creator = await User.findById(creatorId);
-        const noteData = await createNoteData(creator, mdFilesBlocks[index]);
-
-        if (noteId) {
-          noteData.baseNote = noteId;
-        }
         const title =
           (mdFilesBlocks[index].find((block) => ["h1", "h2", "h3", "p"].includes(block.tag))
             ?.html ?? "제목이 없는") + " 노트";
@@ -298,14 +293,19 @@ const importNote = async (req, res, next) => {
           recipient: user,
           recipientId: userId,
           noteId,
-          message: decodedCreatorId
+          message: decodedNoteId
             ? "원본이 있는 노트를 로컬에서 가져왔습니다. 📥"
             : "를 새롭게 가져왔습니다. 📥",
           path: null,
           title,
         });
 
-        return await createAndSaveNote(noteData, creator);
+        return await storeNote({
+          creator,
+          note: mdFilesBlocks[index],
+          editor: creator,
+          baseNoteId: noteId,
+        });
       })
     );
 
