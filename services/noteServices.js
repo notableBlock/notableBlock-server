@@ -10,7 +10,7 @@ const storeNote = async ({ creator, note, editor, baseNoteId = null }) => {
     next(createError(500, "노트를 생성하는데 실패했습니다."));
   }
 
-  const savedNote = Note.create({
+  const savedNote = await Note.create({
     creatorId: creator._id,
     creator: creator.name,
     creatorPicture: creator.picture,

@@ -30,22 +30,11 @@ const getNotes = async (req, res, next) => {
 
 const createNote = async (req, res, next) => {
   const { user } = req;
-  const { _id: userId, name: userName, picture: userPicture, notes: userNotes } = user;
+  const { _id: userId } = user;
 
   try {
-    const newNote = new Note({
-      creatorId: userId,
-      creator: userName,
-      creatorPicture: userPicture,
-      blocks: [],
-      shared: false,
-      createdAt: getCurrentDate(),
-      editor: userName,
-      editorPicture: userPicture,
-    });
-
-    const { _id: savedNoteId } = await newNote.save();
-    userNotes.push(savedNoteId);
+    const savedNote = await storeNote({ creator: user, note: [], editor: user });
+    const { _id: savedNoteId } = savedNote;
 
     await storeNotification({
       recipient: user,
@@ -226,7 +215,7 @@ const exportNote = async (req, res, next) => {
 
   try {
     const { blocks } = await findNoteById(noteId);
-    const title = getNoteTitle(blocks)
+    const title = getNoteTitle(blocks);
     const markdown = blockToMarkdown(blocks);
 
     const tempDirectory = path.join(os.tmpdir(), "notableBlock-temp");
