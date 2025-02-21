@@ -14,6 +14,7 @@ const runCommand = require("../services/shellCommandServices");
 
 const { blockToMarkdown } = require("../utils/convertBlock");
 const getCurrentDate = require("../utils/getCurrentDate");
+const getNoteTitle = require("../utils/getNoteTitle");
 
 const getNotes = async (req, res, next) => {
   const { user } = req;
@@ -73,10 +74,8 @@ const deleteNote = async (req, res, next) => {
     if (userId.toString() === creatorId.toString()) {
       const deletedNote = await Note.findByIdAndDelete(noteId);
       const { blocks: deletedNoteBlocks, _id: deletedNoteId } = deletedNote;
+      const title = getNoteTitle(deletedNoteBlocks);
 
-      const title =
-        (deletedNoteBlocks?.find((block) => ["h1", "h2", "h3", "p"].includes(block.tag))?.html ??
-          "제목이 없는") + " 노트";
       if (!deletedNote) {
         return next(createError(404, "삭제할 노트를 찾을 수 없습니다."));
       }
@@ -142,9 +141,8 @@ const shareNote = async (req, res, next) => {
 
   try {
     const sharedNote = await findNoteById(noteId);
-    const title =
-      (sharedNote.blocks.find((block) => ["h1", "h2", "h3", "p"].includes(block.tag))?.html ??
-        "제목이 없는") + " 노트";
+    const { _id: sharedNoteId, blocks: sharedNoteBlocks, creatorId } = sharedNote;
+    const title = getNoteTitle(sharedNoteBlocks);
 
     sharedNote.shared = !sharedNote.shared;
     await sharedNote.save();
@@ -152,11 +150,11 @@ const shareNote = async (req, res, next) => {
     const message = sharedNote.shared ? "를 공유했습니다. ✅" : "공유를 취소했습니다. ⛔";
     const path = sharedNote.shared ? "shared" : null;
 
-    const notifications = [{ userId: userId, noteId: sharedNote._id, message, path }];
-    if (userId.toString() !== sharedNote.creatorId.toString()) {
+    const notifications = [{ userId: userId, noteId: sharedNoteId, message, path }];
+    if (userId.toString() !== creatorId.toString()) {
       notifications.push({
-        userId: sharedNote.creatorId,
-        noteId: sharedNote._id,
+        userId: creatorId,
+        noteId: sharedNoteId,
         message: `내 노트를 ${userName}이 다시 공유했습니다. ♻️`,
         path: "shared",
       });
@@ -228,10 +226,7 @@ const exportNote = async (req, res, next) => {
 
   try {
     const { blocks } = await findNoteById(noteId);
-    const title =
-      (blocks.find((block) => ["h1", "h2", "h3", "p"].includes(block.tag))?.html ?? "제목이 없는") +
-      " 노트";
-
+    const title = getNoteTitle(blocks)
     const markdown = blockToMarkdown(blocks);
 
     const tempDirectory = path.join(os.tmpdir(), "notableBlock-temp");
@@ -284,10 +279,7 @@ const importNote = async (req, res, next) => {
         const creatorId = decodedCreatorId || userId;
         const noteId = decodedNoteId || null;
         const creator = (await User.findById(creatorId)) || user;
-
-        const title =
-          (mdFilesBlocks[index].find((block) => ["h1", "h2", "h3", "p"].includes(block.tag))
-            ?.html ?? "제목이 없는") + " 노트";
+        const title = getNoteTitle(mdFilesBlocks);
 
         await storeNotification({
           recipient: user,

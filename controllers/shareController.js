@@ -7,6 +7,8 @@ const findNoteById = require("../services/findNoteById");
 const storeNote = require("../services/noteServices");
 const storeNotification = require("../services/notificationServices");
 
+const getNoteTitle = require("../utils/getNoteTitle");
+
 const getSharedNotes = async (req, res, next) => {
   try {
     const sharedNotes = await Note.find({ shared: true });
@@ -41,13 +43,9 @@ const copySharedNote = async (req, res, next) => {
   try {
     const originalNote = await findNoteById(noteId);
     const creator = await User.findById(originalNote.creatorId);
-
     const savedNote = await storeNote({ creator, note: originalNote, editor: user });
-    const { _id: savedNoteId, blocks } = savedNote;
-
-    const title =
-      (blocks?.find((block) => ["h1", "h2", "h3", "p"].includes(block.tag))?.html ??
-        "제목이 없는") + " 노트";
+    const { _id: savedNoteId, blocks: savedNoteBlocks } = savedNote;
+    const title = getNoteTitle(savedNoteBlocks)
 
     await storeNotification({
       recipient: user,
