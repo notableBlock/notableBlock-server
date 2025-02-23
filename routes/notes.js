@@ -12,6 +12,7 @@ const {
   exportNote,
   importNote,
 } = require("../controllers/noteController");
+const archiveMarkdown = require("../controllers/archiveController");
 
 const isAuthenticated = require("../middlewares/auth");
 const uploads = require("../middlewares/uploads");
@@ -57,5 +58,7 @@ router.post(
   convertMarkdownToBlocks,
   importNote
 );
+
+router.post("/uploads/archive", uploads.single("file"), archiveMarkdown);
 
 module.exports = router;
