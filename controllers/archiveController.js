@@ -20,9 +20,7 @@ const archiveMarkdown = async (req, res, next) => {
 
   try {
     const tempDirectory = path.join(os.tmpdir(), "notableBlock-temp");
-    if (!fs.existsSync(tempDirectory)) {
-      fs.mkdirSync(tempDirectory, { recursive: true });
-    }
+    fs.mkdirSync(tempDirectory, { recursive: true });
 
     const tarFilePath = path.join(tempDirectory, `${filename}.tar`);
     const mdFilePath = path.join(os.homedir(), "Downloads", filename);

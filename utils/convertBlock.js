@@ -9,6 +9,10 @@ const blockToMarkdown = (blocks) => {
         return `## ${block.html}\n`;
       case "h3":
         return `### ${block.html}\n`;
+      case "img":
+        const imageName = block.imageUrl.split("/").pop();
+
+        return `![${imageName}](assets/${imageName})`;
       default:
         return `${block.html}\n`;
     }

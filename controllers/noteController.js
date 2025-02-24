@@ -216,10 +216,25 @@ const exportNote = async (req, res, next) => {
   try {
     const { blocks } = await findNoteById(noteId);
     const title = getNoteTitle(blocks);
-    const markdown = blockToMarkdown(blocks);
 
     const tempDirectory = path.join(os.tmpdir(), "notableBlock-temp");
-    if (!fs.existsSync(tempDirectory)) fs.mkdirSync(tempDirectory);
+    fs.mkdirSync(tempDirectory, { recursive: true });
+
+    const assetsDirectory = path.join(tempDirectory, "assets");
+    fs.mkdirSync(assetsDirectory, { recursive: true });
+
+    const imagePaths = blocks
+      .filter(({ imageUrl }) => imageUrl)
+      .map(({ imageUrl }) => `public/${imageUrl}`);
+
+    imagePaths.forEach((imagePath) => {
+      const imageFilename = path.basename(imagePath);
+      const assetsImagePath = path.join(assetsDirectory, imageFilename);
+
+      fs.copyFileSync(imagePath, assetsImagePath);
+    });
+
+    const markdown = blockToMarkdown(blocks);
 
     const mdFilePath = path.join(tempDirectory, `${title}.md`);
     fs.writeFileSync(mdFilePath, markdown);
@@ -227,7 +242,7 @@ const exportNote = async (req, res, next) => {
     await runCommand("/usr/bin/xattr", ["-w", "user.noteId", zwcNoteId, mdFilePath]);
 
     const tarFilePath = path.join(tempDirectory, `${title}.tar`);
-    await runCommand("tar", ["-cf", tarFilePath, `-C`, tempDirectory, `${title}.md`]);
+    await runCommand("tar", ["-cf", tarFilePath, "-C", tempDirectory, `${title}.md`, "assets"]);
 
     await storeNotification({
       recipient: user,
@@ -252,6 +267,7 @@ const exportNote = async (req, res, next) => {
 
       fs.unlinkSync(mdFilePath);
       fs.unlinkSync(tarFilePath);
+      fs.rmSync(assetsDirectory, { recursive: true, force: true });
     });
   } catch (err) {
     next(createError(500, "노트를 로컬로 내보내는데 실패했습니다."));
