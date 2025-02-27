@@ -15,7 +15,6 @@ const {
   archiveMarkdown,
 } = require("../controllers/importExportController");
 
-const isAuthenticated = require("../middlewares/auth");
 const uploads = require("../middlewares/uploads");
 const convertMarkdownToBlocks = require("../middlewares/markdown");
 const {
