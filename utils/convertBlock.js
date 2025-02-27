@@ -1,3 +1,5 @@
+const path = require("path");
+
 const objectId = require("./objectId");
 
 const blockToMarkdown = (blocks) => {
@@ -10,9 +12,9 @@ const blockToMarkdown = (blocks) => {
       case "h3":
         return `### ${block.html}\n`;
       case "img":
-        const imageName = block.imageUrl.split("/").pop();
+        const imageName = path.basename(block.imageUrl);
 
-        return `![${imageName}](assets/${imageName})`;
+        return `![${imageName}](assets/${imageName})\n`;
       default:
         return `${block.html}\n`;
     }
@@ -32,8 +34,15 @@ const markdownToBlocks = (markdown) => {
         return { id: objectId(), tag: "h2", html: line.slice(3) };
       case line.startsWith("### "):
         return { id: objectId(), tag: "h3", html: line.slice(4) };
-      case line.indexOf(process.env.DELETE_PASSWORD) !== -1:
-        return null;
+
+      case line.startsWith("!["):
+        if (line.includes("](") && line.endsWith(")")) {
+          const imageUrl = `/uploads/images/${path.basename(line).split(")")[0]}`;
+
+          return { id: objectId(), tag: "img", imageUrl: imageUrl };
+        }
+
+        return { id: objectId(), tag: "p", html: line };
       default:
         return { id: objectId(), tag: "p", html: line };
     }

@@ -11,11 +11,11 @@ const convertMarkdownToBlocks = async (req, res, next) => {
         try {
           const markdown = await fs.promises.readFile(path, "utf-8");
           const blocks = markdownToBlocks(markdown);
+
           await fs.promises.unlink(path);
 
           return blocks;
         } catch (err) {
-          console.log(`파일 처리 오류 (${path}):`, err.message);
 
           return null;
         }
@@ -25,7 +25,6 @@ const convertMarkdownToBlocks = async (req, res, next) => {
     req.mdFilesBlocks = mdFilesBlocks;
     next();
   } catch (err) {
-    console.log(`마크다운 변환 실패: ${err.message}`);
     next(createError(500, "마크다운 변환 중 오류가 발생했습니다."));
   }
 };

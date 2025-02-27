@@ -25,7 +25,8 @@ const {
   convertIdsToZwcIds,
   convertZwcIdsToBytesIds,
 } = require("../middlewares/zeroWidthCharacter");
-const { extractTarAndReadIds } = require("../middlewares/shellCommand");
+const extractTar = require("../middlewares/shellCommand");
+const saveImageFromTar = require("../middlewares/image");
 
 const router = express.Router();
 
@@ -52,7 +53,8 @@ router.get("/:noteId/download", convertIdsToBlockchain, convertIdsToZwcIds, expo
 router.post(
   "/uploads",
   uploads.single("file"),
-  extractTarAndReadIds,
+  extractTar,
+  saveImageFromTar,
   convertZwcIdsToBytesIds,
   decodeBytesIdsToBlockchainIds,
   convertMarkdownToBlocks,
