@@ -9,6 +9,49 @@ const storeNotification = require("../services/notificationServices");
 
 const getNoteTitle = require("../utils/getNoteTitle");
 
+const shareNote = async (req, res, next) => {
+  const { user, params } = req;
+  const { _id: userId, name: userName } = user;
+  const { noteId } = params;
+
+  try {
+    const sharedNote = await findNoteById(noteId);
+    const { _id: sharedNoteId, blocks: sharedNoteBlocks, creatorId } = sharedNote;
+    const title = getNoteTitle(sharedNoteBlocks);
+
+    sharedNote.shared = !sharedNote.shared;
+    await sharedNote.save();
+
+    const message = sharedNote.shared ? "를 공유했습니다. ✅" : "공유를 취소했습니다. ⛔";
+    const path = sharedNote.shared ? "shared" : null;
+
+    const notifications = [{ userId: userId, noteId: sharedNoteId, message, path }];
+    if (userId.toString() !== creatorId.toString()) {
+      notifications.push({
+        userId: creatorId,
+        noteId: sharedNoteId,
+        message: `내 노트를 ${userName}이 다시 공유했습니다. ♻️`,
+        path: "shared",
+      });
+    }
+
+    for (const { userId, noteId, message, path } of notifications) {
+      await storeNotification({
+        recipient: user,
+        recipientId: userId,
+        noteId,
+        message,
+        path,
+        title,
+      });
+    }
+
+    res.status(200).json({ note: sharedNote, message });
+  } catch (err) {
+    next(createError(500, "노트를 공유하는데 실패했습니다."));
+  }
+};
+
 const getSharedNotes = async (req, res, next) => {
   try {
     const sharedNotes = await Note.find({ shared: true });
@@ -23,7 +66,7 @@ const getSharedNotes = async (req, res, next) => {
   }
 };
 
-const showSharedNote = async (req, res, next) => {
+const readSharedNote = async (req, res, next) => {
   const { noteId } = req.params;
 
   try {
@@ -45,7 +88,7 @@ const copySharedNote = async (req, res, next) => {
     const creator = await User.findById(originalNote.creatorId);
     const savedNote = await storeNote({ creator, note: originalNote, editor: user });
     const { _id: savedNoteId, blocks: savedNoteBlocks } = savedNote;
-    const title = getNoteTitle(savedNoteBlocks)
+    const title = getNoteTitle(savedNoteBlocks);
 
     await storeNotification({
       recipient: user,
@@ -62,4 +105,4 @@ const copySharedNote = async (req, res, next) => {
   }
 };
 
-module.exports = { getSharedNotes, showSharedNote, copySharedNote };
+module.exports = { shareNote, getSharedNotes, readSharedNote, copySharedNote };

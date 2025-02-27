@@ -8,8 +8,8 @@ const router = express.Router();
 
 router.post("/", login);
 
-router.get("/", isAuthenticated, autoLogin);
-
-router.post("/logout", isAuthenticated, logout);
+router.use(isAuthenticated);
+router.get("/", autoLogin);
+router.post("/logout", logout);
 
 module.exports = router;

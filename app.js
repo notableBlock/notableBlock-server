@@ -15,13 +15,15 @@ const notesRouter = require("./routes/notes");
 const sharedRouter = require("./routes/shared");
 const notificationRouter = require("./routes/notification");
 
+const isAuthenticated = require("./middlewares/auth")
+
 const app = express();
 
 try {
   mongoose.connect(process.env.MONGO_ATLAS_URI);
   console.log("MongoDB 연결 성공");
 } catch (err) {
-  console.error("MongoDB 연결 실패:", err);
+  console.log("MongoDB 연결 실패:", err);
   next(err);
 }
 
@@ -50,6 +52,8 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
+
+app.use(isAuthenticated);
 app.use("/notes", notesRouter);
 app.use("/shared", sharedRouter);
 app.use("/notification", notificationRouter);
