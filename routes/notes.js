@@ -54,10 +54,10 @@ router.post(
   "/uploads",
   uploads.single("file"),
   extractTar,
+  convertMarkdownToBlocks,
   saveImageFromTar,
   convertZwcIdsToBytesIds,
   decodeBytesIdsToBlockchainIds,
-  convertMarkdownToBlocks,
   importNote
 );
 
