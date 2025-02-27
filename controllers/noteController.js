@@ -280,7 +280,7 @@ const importNote = async (req, res, next) => {
 
   try {
     const allNotes = await Promise.all(
-      blockchainIds.map(async ({ decodedCreatorId, decodedNoteId }, index) => {
+      blockchainIds.map(async ({ decodedCreatorId, decodedNoteId }) => {
         const creatorId = decodedCreatorId || userId;
         const noteId = decodedNoteId || null;
         const creator = (await User.findById(creatorId)) || user;
@@ -299,7 +299,7 @@ const importNote = async (req, res, next) => {
 
         return await storeNote({
           creator,
-          note: mdFilesBlocks[index],
+          note: mdFilesBlocks,
           editor: creator,
           baseNoteId: noteId,
         });
