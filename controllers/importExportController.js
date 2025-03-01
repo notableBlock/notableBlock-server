@@ -89,8 +89,8 @@ const exportNote = async (req, res, next) => {
     await runCommand("/usr/bin/xattr", ["-w", "user.creatorId", zwcCreatorId, mdFilePath]);
     await runCommand("/usr/bin/xattr", ["-w", "user.noteId", zwcNoteId, mdFilePath]);
 
-    const tarFilePath = path.join(tempDirectory, `${title}.tar`);
-    await runCommand("tar", ["-cf", tarFilePath, "-C", tempDirectory, `${title}.md`, "assets"]);
+    const tarArchivePath = path.join(tempDirectory, `${title}.tar`);
+    await runCommand("tar", ["-cf", tarArchivePath, "-C", tempDirectory, `${title}.md`, "assets"]);
 
     await storeNotification({
       recipient: user,
@@ -108,13 +108,13 @@ const exportNote = async (req, res, next) => {
     res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
     res.setHeader("Content-Type", "application/x-tar");
 
-    res.download(tarFilePath, `${title}.tar`, (err) => {
+    res.download(tarArchivePath, `${title}.tar`, (err) => {
       if (err) {
         return next(createError(500, "파일 전송 중 오류가 발생했습니다."));
       }
 
       fs.unlinkSync(mdFilePath);
-      fs.unlinkSync(tarFilePath);
+      fs.unlinkSync(tarArchivePath);
       fs.rmSync(assetsDirectory, { recursive: true, force: true });
     });
   } catch (err) {
@@ -122,58 +122,69 @@ const exportNote = async (req, res, next) => {
   }
 };
 
-const archiveMarkdown = async (req, res, next) => {
-  const { filename, path: uploadedFilePath } = req.file;
+const archiveUploadedFiles = async (req, res, next) => {
+  const { files, isMdFileExist } = req;
 
-  if (!uploadedFilePath) {
-    return next(createError(400, "업로드된 파일이 존재하지 않습니다."));
-  }
-
-  const isNotMarkdown = path.extname(filename) !== ".md";
-  if (isNotMarkdown) {
-    fs.unlinkSync(uploadedFilePath);
-    return next(createError(500, "마크다운이 아닌 파일입니다."));
+  if (!isMdFileExist) {
+    return next(createError(404, "마크다운이 존재하지 않습니다."));
   }
 
   try {
     const tempDirectory = path.join(os.tmpdir(), "notableBlock-temp");
     fs.mkdirSync(tempDirectory, { recursive: true });
+    const downloadDirectory = path.join(os.homedir(), "Downloads");
 
-    const tarFilePath = path.join(tempDirectory, `${filename}.tar`);
-    const mdFilePath = path.join(os.homedir(), "Downloads", filename);
+    const filesData = files.map(({ filename }) => ({
+      name: filename,
+      fullPath: path.join(downloadDirectory, filename),
+    }));
 
-    if (fs.existsSync(tarFilePath)) {
-      fs.unlinkSync(tarFilePath);
+    const tarTitle = filesData
+      .filter(({ name }) => name.endsWith(".md"))
+      .map(({ name }) => path.basename(name, ".md"))
+      .join(", ");
+
+    if (!tarTitle) {
+      return next(createError(404, "압축할 마크다운 파일이 없습니다."));
     }
-    if (!fs.existsSync(mdFilePath)) {
-      return next(createError(404, "압축할 마크다운 파일이 다운로드 폴더에 존재하지 않습니다."));
+
+    const tarArchivePath = path.join(tempDirectory, `${tarTitle}.tar`);
+    const missingFiles = filesData.filter(({ fullPath }) => !fs.existsSync(fullPath));
+
+    if (missingFiles.length > 0) {
+      return next(createError(404, "압축할 파일이 다운로드 폴더에 존재하지 않습니다."));
     }
 
     try {
-      await runCommand("tar", ["-cf", tarFilePath, "-C", path.dirname(mdFilePath), filename]);
+      await runCommand("tar", [
+        "-cf",
+        tarArchivePath,
+        "-C",
+        downloadDirectory,
+        ...filesData.map(({ name }) => name),
+      ]);
     } catch (err) {
       return next(createError(500, "tar 압축 중 오류가 발생했습니다."));
     }
 
-    const tarFilename = `${path.parse(filename).name}.tar`;
-
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="${encodeURIComponent(tarFilename)}"; filename*=UTF-8''${encodeURIComponent(tarFilename)}`
+      `attachment; filename="${encodeURIComponent(tarTitle)}"; filename*=UTF-8''${encodeURIComponent(tarTitle)}.tar`
     );
     res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
     res.setHeader("Content-Type", "application/x-tar");
-    res.download(tarFilePath, tarFilename, (err) => {
+
+    res.download(tarArchivePath, `${tarTitle}.tar`, (err) => {
       if (err) {
         return next(createError(500, "파일 전송 중 오류가 발생했습니다."));
       }
 
-      fs.unlinkSync(uploadedFilePath);
-      fs.unlinkSync(tarFilePath);
+      files.forEach(({ path }) => fs.unlinkSync(path));
+      fs.unlinkSync(tarArchivePath);
     });
   } catch (err) {
     next(createError(500, "tar 압축에 실패했습니다."));
   }
 };
 
-module.exports = { importNote, exportNote, archiveMarkdown };
+module.exports = { importNote, exportNote, archiveUploadedFiles };

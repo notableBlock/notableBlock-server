@@ -12,10 +12,10 @@ const { uploadImageToNote, removeImageFromNote } = require("../controllers/image
 const {
   importNote,
   exportNote,
-  archiveMarkdown,
+  archiveUploadedFiles,
 } = require("../controllers/importExportController");
 
-const uploads = require("../middlewares/uploads");
+const upload = require("../middlewares/upload");
 const convertMarkdownToBlocks = require("../middlewares/markdown");
 const {
   convertIdsToBlockchain,
@@ -30,7 +30,7 @@ const saveImageFromTar = require("../middlewares/image");
 
 const router = express.Router();
 const importNoteMiddlewares = [
-  uploads.single("file"),
+  upload.single("file"),
   extractTar,
   convertMarkdownToBlocks,
   saveImageFromTar,
@@ -45,11 +45,11 @@ router.put("/", updateNote);
 router.get("/:noteId", readNote);
 router.delete("/:noteId", deleteNote);
 router.patch("/:noteId", shareNote);
-router.post("/:noteId/images", uploads.single("file"), uploadImageToNote);
+router.post("/:noteId/images", upload.single("file"), uploadImageToNote);
 router.get("/:noteId/download", convertIdsToBlockchain, convertIdsToZwcIds, exportNote);
 
 router.post("/uploads", ...importNoteMiddlewares, importNote);
-router.post("/uploads/archive", uploads.single("file"), archiveMarkdown);
+router.post("/uploads/archive", upload.array("files"), archiveUploadedFiles);
 router.delete("/uploads/images/:imageName", removeImageFromNote);
 
 module.exports = router;
