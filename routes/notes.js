@@ -45,7 +45,7 @@ router.put("/", updateNote);
 router.get("/:noteId", readNote);
 router.delete("/:noteId", deleteNote);
 router.patch("/:noteId", shareNote);
-router.post("/:noteId/images", upload.single("file"), uploadImageToNote);
+router.post("/:noteId/images", upload.single("image"), uploadImageToNote);
 router.get("/:noteId/download", convertIdsToBlockchain, convertIdsToZwcIds, exportNote);
 
 router.post("/uploads", ...importNoteMiddlewares, importNote);
