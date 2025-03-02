@@ -19,11 +19,11 @@ const importNote = async (req, res, next) => {
 
   try {
     const allNotes = await Promise.all(
-      blockchainIds.map(async ({ decodedCreatorId, decodedNoteId }) => {
+      blockchainIds.map(async ({ decodedCreatorId, decodedNoteId }, index) => {
         const creatorId = decodedCreatorId || userId;
         const noteId = decodedNoteId || null;
         const creator = (await User.findById(creatorId)) || user;
-        const title = getNoteTitle(mdFilesBlocks);
+        const title = getNoteTitle(mdFilesBlocks[index]);
 
         await storeNotification({
           recipient: user,
@@ -38,7 +38,7 @@ const importNote = async (req, res, next) => {
 
         return await storeNote({
           creator,
-          note: mdFilesBlocks,
+          note: mdFilesBlocks[index],
           editor: creator,
           baseNoteId: noteId,
         });

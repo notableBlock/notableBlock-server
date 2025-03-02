@@ -30,7 +30,7 @@ const saveImageFromTar = require("../middlewares/image");
 
 const router = express.Router();
 const importNoteMiddlewares = [
-  upload.single("file"),
+  upload.array("files"),
   extractTar,
   convertMarkdownToBlocks,
   saveImageFromTar,

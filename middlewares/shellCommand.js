@@ -6,16 +6,22 @@ const createError = require("http-errors");
 const runCommand = require("../services/shellCommandServices");
 
 const extractTar = async (req, res, next) => {
-  const tarFilePath = req.file.path;
+  const tarFiles = req.files;
 
-  if (!tarFilePath) {
+  if (!tarFiles.length) {
     return next(createError(400, "파일이 제공되지 않았습니다."));
   }
 
   try {
     const tempDirectory = await fs.promises.mkdtemp(path.join(os.tmpdir(), "notableBlock-temp-"));
 
-    await runCommand("tar", ["--xattrs", "-xvf", tarFilePath, "-C", tempDirectory], true);
+    await Promise.all(
+      tarFiles.map(async ({ path }) => {
+        await runCommand("tar", ["--xattrs", "-xvf", path, "-C", tempDirectory], true);
+
+        fs.unlinkSync(path);
+      })
+    );
 
     const extractedFiles = await fs.promises.readdir(tempDirectory, { recursive: true });
     const mdFiles = extractedFiles.filter((file) => file.endsWith(".md"));
@@ -59,8 +65,6 @@ const extractTar = async (req, res, next) => {
       .filter(Boolean)
       .map(({ extractedCreatorId, extractedNoteId }) => ({ extractedCreatorId, extractedNoteId }));
     const mdFilePaths = mdFileData.filter(Boolean).map(({ mdFilePath }) => mdFilePath);
-
-    fs.unlinkSync(tarFilePath);
 
     req.extractedIds = extractedIds;
     req.mdFilePaths = mdFilePaths;
