@@ -1,3 +1,4 @@
+const path = require("path");
 const createError = require("http-errors");
 
 const Note = require("../models/Note");
@@ -6,6 +7,7 @@ const User = require("../models/User");
 const findNoteById = require("../services/findNoteById");
 const storeNote = require("../services/noteServices");
 const storeNotification = require("../services/notificationServices");
+const clearImage = require("../services/cleanUpServices");
 
 const getCurrentDate = require("../utils/getCurrentDate");
 const getNoteTitle = require("../utils/getNoteTitle");
@@ -95,12 +97,19 @@ const deleteNote = async (req, res, next) => {
 
     if (userId.toString() === creatorId.toString()) {
       const deletedNote = await Note.findByIdAndDelete(noteId);
-      const { blocks: deletedNoteBlocks, _id: deletedNoteId } = deletedNote;
-      const title = getNoteTitle(deletedNoteBlocks);
 
       if (!deletedNote) {
         return next(createError(404, "삭제할 노트를 찾을 수 없습니다."));
       }
+
+      const { blocks: deletedNoteBlocks, _id: deletedNoteId } = deletedNote;
+      const title = getNoteTitle(deletedNoteBlocks);
+
+      deletedNoteBlocks
+        .filter(({ imageUrl }) => imageUrl)
+        .forEach(({ imageUrl }) => {
+          clearImage(path.basename(imageUrl));
+        });
 
       const user = await User.findById(userId);
       if (!user) {

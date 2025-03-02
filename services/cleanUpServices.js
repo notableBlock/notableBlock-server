@@ -1,8 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-const clearImage = (imagePath) => {
-  imagePath = path.join(__dirname, "..", "public", "uploads", imagePath);
+const clearImage = (imageName) => {
+  const imagePath = path.join(__dirname, "..", "public", "uploads", "images", imageName);
+
   fs.unlink(imagePath, (err) => console.log(err));
 };
 

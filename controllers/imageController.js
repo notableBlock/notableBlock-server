@@ -1,6 +1,6 @@
 const createError = require("http-errors");
 
-const clearImage = require("../services/uploadsServices");
+const clearImage = require("../services/cleanUpServices");
 
 const uploadImageToNote = async (req, res, next) => {
   const imageUrl = `/uploads/images/${req.file.filename}`;
@@ -23,8 +23,7 @@ const removeImageFromNote = async (req, res, next) => {
   }
 
   try {
-    const imagePath = `images/${imageName}`;
-    clearImage(imagePath);
+    clearImage(imageName);
 
     res.status(200).json({ message: "이미지가 정상적으로 삭제되었습니다." });
   } catch (err) {
