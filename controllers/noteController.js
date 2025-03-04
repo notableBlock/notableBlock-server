@@ -15,6 +15,7 @@ const getNoteTitle = require("../utils/getNoteTitle");
 const getUserNotes = async (req, res, next) => {
   const { user } = req;
   const { notes: userNotes } = user;
+
   try {
     res.status(200).json({
       notesId: userNotes ? userNotes.map((note) => note.toString()) : [],
@@ -29,7 +30,12 @@ const createNote = async (req, res, next) => {
   const { _id: userId } = user;
 
   try {
-    const savedNote = await storeNote({ creator: user, note: [], editor: user });
+    const savedNote = await storeNote({
+      creator: user,
+      note: [],
+      title: "제목이 없는 노트",
+      editor: user,
+    });
     const { _id: savedNoteId } = savedNote;
 
     await storeNotification({
@@ -52,6 +58,7 @@ const readNote = async (req, res, next) => {
 
   try {
     const note = await findNoteById(noteId);
+
     res.status(200).json(note);
   } catch (err) {
     next(createError(500, "노트를 찾을 수 없습니다."));
@@ -70,6 +77,7 @@ const updateNote = async (req, res, next) => {
         blocks,
         id: blocksId,
         updatedAt: getCurrentDate(),
+        title: getNoteTitle(blocks),
         editor: name,
         editorPicture: picture,
       },

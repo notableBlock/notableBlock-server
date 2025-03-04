@@ -40,6 +40,7 @@ const importNote = async (req, res, next) => {
           creator,
           note: mdFilesBlocks[index],
           editor: creator,
+          title,
           baseNoteId: noteId,
         });
       })
