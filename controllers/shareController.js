@@ -85,10 +85,18 @@ const copySharedNote = async (req, res, next) => {
 
   try {
     const originalNote = await findNoteById(noteId);
-    const creator = await User.findById(originalNote.creatorId);
-    const title = getNoteTitle(originalNote.blocks);
+    const { _id: originalNoteId, creatorId, blocks: originalNoteBlocks } = originalNote;
 
-    const savedNote = await storeNote({ creator, note: originalNote, title, editor: user });
+    const creator = await User.findById(creatorId);
+    const title = getNoteTitle(originalNoteBlocks);
+
+    const savedNote = await storeNote({
+      creator,
+      note: originalNote,
+      title,
+      editor: user,
+      baseNoteId: originalNoteId,
+    });
     const { _id: savedNoteId } = savedNote;
 
     await storeNotification({

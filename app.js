@@ -15,7 +15,7 @@ const notesRouter = require("./routes/notes");
 const sharedRouter = require("./routes/shared");
 const notificationRouter = require("./routes/notification");
 
-const isAuthenticated = require("./middlewares/auth")
+const isAuthenticated = require("./middlewares/auth");
 
 const app = express();
 
@@ -55,6 +55,11 @@ app.use("/users", usersRouter);
 
 app.use(isAuthenticated);
 app.use("/notes", notesRouter);
+// app.use("/notes-tree", async (req, res, next) => {
+//   console.log("🚀 요청 체킹!");
+
+//   res.status(200).json({ message: "트리 노트!" });
+// });
 app.use("/shared", sharedRouter);
 app.use("/notification", notificationRouter);
 
