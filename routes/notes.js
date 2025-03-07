@@ -14,6 +14,7 @@ const {
   exportNote,
   archiveUploadedFiles,
 } = require("../controllers/importExportController");
+const getOwnedNotes = require("../controllers/treeController");
 
 const upload = require("../middlewares/upload");
 const convertMarkdownToBlocks = require("../middlewares/markdown");
@@ -41,6 +42,8 @@ const importNoteMiddlewares = [
 router.get("/", getUserNotes);
 router.post("/", createNote);
 router.put("/", updateNote);
+
+router.get("/tree", getOwnedNotes);
 
 router.get("/:noteId", readNote);
 router.delete("/:noteId", deleteNote);

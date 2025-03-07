@@ -5,6 +5,7 @@ const noteSchema = new mongoose.Schema({
   creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   creatorPicture: { type: mongoose.Schema.Types.String, ref: "User" },
   editor: { type: mongoose.Schema.Types.String, ref: "User" },
+  editorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   editorPicture: { type: mongoose.Schema.Types.String, ref: "User" },
   blockchainRef: { type: String },
   title: { type: String, required: true },
