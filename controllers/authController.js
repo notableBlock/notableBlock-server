@@ -23,11 +23,10 @@ const login = async (req, res, next) => {
     res.status(200).json({
       message: "로그인에 성공했습니다.",
       access_token: access_token,
-      profile: { name: savedUser.name, picture: savedUser.picture },
+      profile: { name: savedUser.name, picture: savedUser.picture, id: savedUser._id },
     });
   } catch (err) {
     next(createError(500, "로그인에 실패했습니다."));
-    return;
   }
 };
 
@@ -48,8 +47,7 @@ const autoLogin = async (req, res, next) => {
     try {
       const { refresh_token, _id: userId } = req.user;
       if (!refresh_token) {
-        next(createError(401, "Refresh Token이 없어 재로그인이 필요합니다."));
-        return;
+        return next(createError(401, "Refresh Token이 없어 재로그인이 필요합니다."));
       }
 
       oauth2Client.setCredentials({ refresh_token: refresh_token });
@@ -75,7 +73,6 @@ const autoLogin = async (req, res, next) => {
       });
     } catch (err) {
       next(createError(401, "자동 로그인에 실패해 재로그인이 필요합니다."));
-      return;
     }
   }
 };
@@ -94,7 +91,6 @@ const logout = async (req, res, next) => {
     res.status(200).json({ message: "로그아웃에 성공했습니다." });
   } catch (err) {
     next(createError(500, "로그아웃에 실패했습니다."));
-    return;
   }
 };
 
