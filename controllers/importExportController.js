@@ -39,7 +39,7 @@ const importNote = async (req, res, next) => {
         return await storeNote({
           creator,
           note: mdFilesBlocks[index],
-          editor: creator,
+          editor: user,
           title,
           baseNoteId: noteId,
         });

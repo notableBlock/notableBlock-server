@@ -98,12 +98,12 @@ const deleteNote = async (req, res, next) => {
   const { _id: userId, notes: userNotes } = req.user;
   const { noteId } = req.params;
   try {
-    const { _id: databaseNoteId, creatorId } = await Note.findById(noteId);
+    const { _id: databaseNoteId, editorId } = await Note.findById(noteId);
     if (!databaseNoteId) {
       return next(createError(404, "노트를 찾을 수 없습니다."));
     }
 
-    if (userId.toString() === creatorId.toString()) {
+    if (userId.toString() === editorId.toString()) {
       const deletedNote = await Note.findByIdAndDelete(noteId);
 
       if (!deletedNote) {
