@@ -4,12 +4,15 @@ const Notification = require("../models/Notification");
 const User = require("../models/User");
 
 const sendNotification = async (req, res, next) => {
+  const { user } = req;
+
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
   try {
-    const notificationStream = Notification.watch();
+    const notificationFilter = [{ $match: { "fullDocument.recipientId": user._id } }];
+    const notificationStream = Notification.watch(notificationFilter);
 
     notificationStream.on("change", (change) => {
       res.write(`data: ${JSON.stringify(change)}\n\n`);
