@@ -5,7 +5,10 @@ const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
 const storeNote = require("../services/noteServices");
-const storeNotification = require("../services/notificationServices");
+const {
+  storeNotification,
+  storePerRecipientNotifications,
+} = require("../services/notificationServices");
 
 const getNoteTitle = require("../utils/getNoteTitle");
 
@@ -22,31 +25,21 @@ const shareNote = async (req, res, next) => {
     sharedNote.shared = !sharedNote.shared;
     await sharedNote.save();
 
-    const message = sharedNote.shared ? "를 공유했습니다. ✅" : "공유를 취소했습니다. ⛔";
+    const messageForCreator = `를 ${userName}이 다시 공유했습니다. ♻️`;
+    const messageForEditor = sharedNote.shared ? "를 공유했습니다. ✅" : "공유를 취소했습니다. ⛔";
     const path = sharedNote.shared ? "shared" : null;
 
-    const notifications = [{ userId: userId, noteId: sharedNoteId, message, path }];
-    if (userId.toString() !== creatorId.toString()) {
-      notifications.push({
-        userId: creatorId,
-        noteId: sharedNoteId,
-        message: `내 노트를 ${userName}이 다시 공유했습니다. ♻️`,
-        path: "shared",
-      });
-    }
+    await storePerRecipientNotifications({
+      userId,
+      creatorId,
+      noteId: sharedNoteId,
+      messageForCreator,
+      messageForEditor,
+      title,
+      path,
+    });
 
-    for (const { userId, noteId, message, path } of notifications) {
-      await storeNotification({
-        recipient: user,
-        recipientId: userId,
-        noteId,
-        message,
-        path,
-        title,
-      });
-    }
-
-    res.status(200).json({ note: sharedNote, message });
+    res.status(200).json({ note: sharedNote, messageForEditor });
   } catch (err) {
     next(createError(500, "노트를 공유하는데 실패했습니다."));
   }
@@ -100,7 +93,6 @@ const copySharedNote = async (req, res, next) => {
     const { _id: savedNoteId } = savedNote;
 
     await storeNotification({
-      recipient: user,
       recipientId: userId,
       noteId: savedNoteId,
       message: "를 내 노트로 가져왔습니다. 📥",

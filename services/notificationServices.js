@@ -3,7 +3,7 @@ const User = require("../models/User");
 
 const getCurrentDate = require("../utils/getCurrentDate");
 
-const storeNotification = async ({ recipient, recipientId, noteId, message, path, title }) => {
+const storeNotification = async ({ recipientId, noteId, message, path = null, title }) => {
   const savedNotification = await Notification.create({
     recipientId,
     message: `"${title}" ${message}`,
@@ -11,7 +11,39 @@ const storeNotification = async ({ recipient, recipientId, noteId, message, path
     receivedAt: getCurrentDate(),
   });
 
-  await User.updateOne({ _id: recipient._id }, { $push: { notifications: savedNotification._id } });
+  await User.updateOne({ _id: recipientId }, { $push: { notifications: savedNotification._id } });
 };
 
-module.exports = storeNotification;
+const storePerRecipientNotifications = async ({
+  userId,
+  creatorId,
+  noteId,
+  messageForCreator,
+  messageForEditor,
+  title,
+  path = null,
+}) => {
+  const notifications = [{ userId, noteId, message: messageForEditor }];
+
+  const isNotCreator = userId.toString() !== creatorId.toString();
+
+  if (isNotCreator) {
+    notifications.push({
+      userId: creatorId,
+      noteId,
+      message: messageForCreator,
+    });
+  }
+
+  for (const { userId, noteId, message } of notifications) {
+    await storeNotification({
+      recipientId: userId,
+      noteId,
+      message,
+      path,
+      title,
+    });
+  }
+};
+
+module.exports = { storeNotification, storePerRecipientNotifications };

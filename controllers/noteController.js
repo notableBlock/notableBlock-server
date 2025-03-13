@@ -6,7 +6,7 @@ const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
 const storeNote = require("../services/noteServices");
-const storeNotification = require("../services/notificationServices");
+const { storeNotification } = require("../services/notificationServices");
 const clearImage = require("../services/cleanUpServices");
 
 const getCurrentDate = require("../utils/getCurrentDate");
@@ -39,11 +39,9 @@ const createNote = async (req, res, next) => {
     const { _id: savedNoteId } = savedNote;
 
     await storeNotification({
-      recipient: user,
       recipientId: userId,
       noteId: savedNoteId,
       message: "가 생성되었습니다. 📝",
-      path: null,
       title: "새로운 노트",
     });
 
@@ -130,11 +128,9 @@ const deleteNote = async (req, res, next) => {
       }
 
       await storeNotification({
-        recipient: user,
         recipientId: userId,
         noteId: deletedNoteId,
         message: "가 삭제되었습니다. 📝",
-        path: null,
         title,
       });
 

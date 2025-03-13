@@ -7,7 +7,9 @@ const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
 const storeNote = require("../services/noteServices");
-const storeNotification = require("../services/notificationServices");
+const {
+  storePerRecipientNotifications,
+} = require("../services/notificationServices");
 const runCommand = require("../services/shellCommandServices");
 
 const getNoteTitle = require("../utils/getNoteTitle");
@@ -15,7 +17,7 @@ const { blockToMarkdown } = require("../utils/convertBlock");
 
 const importNote = async (req, res, next) => {
   const { user, mdFilesBlocks, blockchainIds, tempDirectory } = req;
-  const { _id: userId } = user;
+  const { _id: userId, name: userName } = user;
 
   try {
     const allNotes = await Promise.all(
@@ -24,15 +26,17 @@ const importNote = async (req, res, next) => {
         const noteId = decodedNoteId || null;
         const creator = (await User.findById(creatorId)) || user;
         const title = getNoteTitle(mdFilesBlocks[index]);
+        const messageForCreator = `를 ${userName}이 로컬에서 가져왔습니다. 📥`;
+        const messageForEditor = decodedNoteId
+          ? "원본이 있는 노트를 로컬에서 가져왔습니다. 📥"
+          : "를 새롭게 가져왔습니다. 📥";
 
-        await storeNotification({
-          recipient: user,
-          recipientId: userId,
+        await storePerRecipientNotifications({
+          userId,
+          creatorId,
           noteId,
-          message: decodedNoteId
-            ? "원본이 있는 노트를 로컬에서 가져왔습니다. 📥"
-            : "를 새롭게 가져왔습니다. 📥",
-          path: null,
+          messageForCreator,
+          messageForEditor,
           title,
         });
 
@@ -58,13 +62,12 @@ const importNote = async (req, res, next) => {
 
 const exportNote = async (req, res, next) => {
   const { user, params, zwcIds } = req;
-  const { _id: userId } = user;
+  const { _id: userId, name: userName } = user;
   const { noteId } = params;
   const { zwcCreatorId, zwcNoteId } = zwcIds;
 
   try {
-    const { blocks } = await findNoteById(noteId);
-    const title = getNoteTitle(blocks);
+    const { blocks, creatorId } = await findNoteById(noteId);
 
     const tempDirectory = path.join(os.tmpdir(), "notableBlock-temp");
     fs.mkdirSync(tempDirectory, { recursive: true });
@@ -84,6 +87,7 @@ const exportNote = async (req, res, next) => {
     });
 
     const markdown = blockToMarkdown(blocks);
+    const title = getNoteTitle(blocks);
 
     const mdFilePath = path.join(tempDirectory, `${title}.md`);
     fs.writeFileSync(mdFilePath, markdown);
@@ -93,12 +97,15 @@ const exportNote = async (req, res, next) => {
     const tarArchivePath = path.join(tempDirectory, `${title}.tar`);
     await runCommand("tar", ["-cf", tarArchivePath, "-C", tempDirectory, `${title}.md`, "assets"]);
 
-    await storeNotification({
-      recipient: user,
-      recipientId: userId,
+    const messageForEditor = "를 로컬로 내보냈습니다. 📤";
+    const messageForCreator = `를 ${userName}이 로컬로 내보냈습니다. 📤`;
+
+    await storePerRecipientNotifications({
+      userId,
+      creatorId,
       noteId,
-      message: "를 로컬로 내보냈습니다. 📤",
-      path: null,
+      messageForCreator,
+      messageForEditor,
       title,
     });
 
