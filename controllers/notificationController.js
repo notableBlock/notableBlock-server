@@ -41,7 +41,7 @@ const getNotification = async (req, res, next) => {
   }
 };
 
-const showNotification = async (req, res, next) => {
+const readNotification = async (req, res, next) => {
   const { notificationId } = req.params;
 
   try {
@@ -97,7 +97,7 @@ const deleteAllNotification = async (req, res, next) => {
 module.exports = {
   sendNotification,
   getNotification,
-  showNotification,
+  readNotification,
   deleteNotification,
   deleteAllNotification,
 };

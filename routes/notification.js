@@ -3,7 +3,7 @@ const express = require("express");
 const {
   sendNotification,
   getNotification,
-  showNotification,
+  readNotification,
   deleteNotification,
   deleteAllNotification,
 } = require("../controllers/notificationController");
@@ -15,7 +15,7 @@ router.delete("/", deleteAllNotification);
 
 router.get("/live", sendNotification);
 
-router.get("/:notificationId", showNotification);
+router.get("/:notificationId", readNotification);
 router.delete("/:notificationId", deleteNotification);
 
 module.exports = router;
