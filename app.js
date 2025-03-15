@@ -55,11 +55,6 @@ app.use("/users", usersRouter);
 
 app.use(isAuthenticated);
 app.use("/notes", notesRouter);
-// app.use("/notes-tree", async (req, res, next) => {
-//   console.log("🚀 요청 체킹!");
-
-//   res.status(200).json({ message: "트리 노트!" });
-// });
 app.use("/shared", sharedRouter);
 app.use("/notification", notificationRouter);
 
@@ -68,10 +63,10 @@ app.use((req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
-  res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
-
-  res.status(err.status || 500);
+  res.status(err.status || 500).json({
+    message: err.message,
+    error: req.app.get("env") === "development" ? err : {},
+  });
 });
 
 module.exports = app;
