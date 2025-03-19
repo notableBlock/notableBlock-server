@@ -26,10 +26,10 @@ const importNote = async (req, res, next) => {
         const noteId = decodedNoteId || null;
         const creator = (await User.findById(creatorId)) || user;
         const title = getNoteTitle(mdFilesBlocks[index]);
-        const messageForCreator = `를 ${userName}이 로컬에서 가져왔습니다. 📥`;
+        const messageForCreator = `를 ${userName}이 로컬에서 가져왔어요.`;
         const messageForEditor = decodedNoteId
-          ? "원본이 있는 노트를 로컬에서 가져왔습니다. 📥"
-          : "를 새롭게 가져왔습니다. 📥";
+          ? "원본이 있는 노트를 로컬에서 가져왔어요."
+          : "를 새롭게 가져왔어요.";
 
         await storePerRecipientNotifications({
           userId,
@@ -54,7 +54,7 @@ const importNote = async (req, res, next) => {
       notes: allNotes,
     });
   } catch (err) {
-    next(createError(500, "노트를 로컬에서 가져오는데 실패했습니다."));
+    next(createError(500, "노트를 로컬에서 가져오는데 실패했어요."));
   } finally {
     await fs.promises.rm(tempDirectory, { recursive: true, force: true });
   }
@@ -97,8 +97,8 @@ const exportNote = async (req, res, next) => {
     const tarArchivePath = path.join(tempDirectory, `${title}.tar`);
     await runCommand("tar", ["-cf", tarArchivePath, "-C", tempDirectory, `${title}.md`, "assets"]);
 
-    const messageForEditor = "를 로컬로 내보냈습니다. 📤";
-    const messageForCreator = `를 ${userName}이 로컬로 내보냈습니다. 📤`;
+    const messageForEditor = "를 로컬로 내보냈어요.";
+    const messageForCreator = `를 ${userName}이 로컬로 내보냈어요.`;
 
     await storePerRecipientNotifications({
       userId,
@@ -118,7 +118,7 @@ const exportNote = async (req, res, next) => {
 
     res.download(tarArchivePath, `${title}.tar`, (err) => {
       if (err) {
-        return next(createError(500, "파일 전송 중 오류가 발생했습니다."));
+        return next(createError(500, "파일 전송 중 오류가 발생했어요."));
       }
 
       fs.unlinkSync(mdFilePath);
@@ -126,7 +126,7 @@ const exportNote = async (req, res, next) => {
       fs.rmSync(assetsDirectory, { recursive: true, force: true });
     });
   } catch (err) {
-    next(createError(500, "노트를 로컬로 내보내는데 실패했습니다."));
+    next(createError(500, "노트를 로컬로 내보내는데 실패했어요."));
   }
 };
 
@@ -134,7 +134,7 @@ const archiveUploadedFiles = async (req, res, next) => {
   const { files, isMdFileExist } = req;
 
   if (!isMdFileExist) {
-    return next(createError(404, "마크다운이 존재하지 않습니다."));
+    return next(createError(404, "마크다운이 존재하지 않아요."));
   }
 
   try {
@@ -153,14 +153,14 @@ const archiveUploadedFiles = async (req, res, next) => {
       .join(", ");
 
     if (!tarTitle) {
-      return next(createError(404, "압축할 마크다운 파일이 없습니다."));
+      return next(createError(404, "압축할 마크다운 파일이 없어요."));
     }
 
     const tarArchivePath = path.join(tempDirectory, `${tarTitle}.tar`);
     const missingFiles = filesData.filter(({ fullPath }) => !fs.existsSync(fullPath));
 
     if (missingFiles.length > 0) {
-      return next(createError(404, "압축할 파일이 다운로드 폴더에 존재하지 않습니다."));
+      return next(createError(404, "압축할 파일이 다운로드 폴더에 존재하지 않아요."));
     }
 
     try {
@@ -172,7 +172,7 @@ const archiveUploadedFiles = async (req, res, next) => {
         ...filesData.map(({ name }) => name),
       ]);
     } catch (err) {
-      return next(createError(500, "tar 압축 중 오류가 발생했습니다."));
+      return next(createError(500, "tar 압축 중 오류가 발생했어요."));
     }
 
     res.setHeader(
@@ -184,14 +184,14 @@ const archiveUploadedFiles = async (req, res, next) => {
 
     res.download(tarArchivePath, `${tarTitle}.tar`, (err) => {
       if (err) {
-        return next(createError(500, "파일 전송 중 오류가 발생했습니다."));
+        return next(createError(500, "파일 전송 중 오류가 발생했어요."));
       }
 
       files.forEach(({ path }) => fs.unlinkSync(path));
       fs.unlinkSync(tarArchivePath);
     });
   } catch (err) {
-    next(createError(500, "tar 압축에 실패했습니다."));
+    next(createError(500, "tar 압축에 실패했어요."));
   }
 };
 

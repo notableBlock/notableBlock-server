@@ -32,7 +32,7 @@ const convertIdsToBlockchain = async (req, res, next) => {
 
     next();
   } catch (err) {
-    next(createError(500, "ID를 블록체인 데이터로 변환하던 중 오류가 발생했습니다."));
+    next(createError(500, "ID를 블록체인 데이터로 변환하던 중 오류가 발생했어요."));
   }
 };
 
@@ -75,7 +75,7 @@ const decodeBytesIdsToBlockchainIds = async (req, res, next) => {
     req.blockchainIds = blockchainIds;
     next();
   } catch (err) {
-    next(createError(500, "블록체인 데이터를 ID로 변환하던중 오류가 발생했습니다."));
+    next(createError(500, "블록체인 데이터를 ID로 변환하던중 오류가 발생했어요."));
   }
 };
 

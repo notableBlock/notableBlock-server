@@ -38,7 +38,7 @@ const saveImageFromTar = async (req, res, next) => {
 
     next();
   } catch (err) {
-    next(createError(500, "파일에 있던 이미지를 저장하던 중 오류가 발생했습니다."));
+    next(createError(500, "파일에 있던 이미지를 저장하던 중 오류가 발생했어요."));
   }
 };
 

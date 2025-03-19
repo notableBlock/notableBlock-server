@@ -9,7 +9,7 @@ const extractTar = async (req, res, next) => {
   const tarFiles = req.files;
 
   if (!tarFiles.length) {
-    return next(createError(400, "파일이 제공되지 않았습니다."));
+    return next(createError(400, "파일이 제공되지 않았어요."));
   }
 
   try {
@@ -32,7 +32,7 @@ const extractTar = async (req, res, next) => {
     );
 
     if (mdFiles.length === 0) {
-      return next(createError(404, "마크다운 파일을 찾을 수 없습니다."));
+      return next(createError(404, "마크다운 파일을 찾을 수 없어요."));
     }
 
     const mdFileData = await Promise.all(
@@ -73,7 +73,7 @@ const extractTar = async (req, res, next) => {
 
     next();
   } catch (err) {
-    next(createError(500, "파일 압축 해제 중 오류가 발생했습니다."));
+    next(createError(500, "파일 압축 해제 중 오류가 발생했어요."));
   }
 };
 

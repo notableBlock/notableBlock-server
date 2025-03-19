@@ -7,7 +7,7 @@ const isAuthenticated = async (req, res, next) => {
   const { access_token } = req.cookies;
 
   if (!access_token) {
-    return next(createError(401, "인증 토큰이 없습니다."));
+    return next(createError(401, "인증 토큰이 없어요."));
   }
 
   try {
@@ -21,13 +21,13 @@ const isAuthenticated = async (req, res, next) => {
     const user = await User.findOne({ googleId: sub });
 
     if (!user) {
-      return next(createError(404, "사용자를 찾을 수 없습니다."));
+      return next(createError(404, "사용자를 찾을 수 없어요."));
     }
 
     req.user = user;
     next();
   } catch (err) {
-    next(createError(500, "사용자 인증에 실패했습니다."));
+    next(createError(500, "사용자 인증에 실패했어요."));
   }
 };
 

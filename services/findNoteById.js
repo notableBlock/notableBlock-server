@@ -7,12 +7,12 @@ const findNoteById = async (noteId) => {
     const note = await Note.findById(noteId);
 
     if (!note) {
-      throw createError(404, "소유한 노트가 없습니다.");
+      throw createError(404, "소유한 노트가 없어요.");
     }
 
     return note;
   } catch (err) {
-    throw createError(500, "노트를 찾을 수 없습니다.");
+    throw createError(500, "노트를 찾을 수 없어요.");
   }
 };
 

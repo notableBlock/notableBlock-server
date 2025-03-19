@@ -12,7 +12,7 @@ const getOwnedNotes = async (req, res, next) => {
 
     res.status(200).json({ ownedNotes });
   } catch {
-    next(createError(500, "원본 소유자가 소유한 노트를 찾을 수 없습니다."));
+    next(createError(500, "원본 소유자가 소유한 노트를 찾을 수 없어요."));
   }
 };
 

@@ -21,7 +21,7 @@ const getUserNotes = async (req, res, next) => {
       notesId: userNotes ? userNotes.map((note) => note.toString()) : [],
     });
   } catch (err) {
-    next(createError(500, "노트를 가져오는데 실패했습니다."));
+    next(createError(500, "노트를 가져오는데 실패했어요."));
   }
 };
 
@@ -41,13 +41,13 @@ const createNote = async (req, res, next) => {
     await storeNotification({
       recipientId: userId,
       noteId: savedNoteId,
-      message: "가 생성되었습니다. 📝",
+      message: "가 생성되었어요.",
       title: "새로운 노트",
     });
 
     res.status(201).json({ noteId: savedNoteId.toString() });
   } catch (err) {
-    next(createError(500, "노트를 생성하는데 실패했습니다."));
+    next(createError(500, "노트를 생성하는데 실패했어요."));
   }
 };
 
@@ -59,7 +59,7 @@ const readNote = async (req, res, next) => {
 
     res.status(200).json(note);
   } catch (err) {
-    next(createError(500, "노트를 찾을 수 없습니다."));
+    next(createError(500, "노트를 찾을 수 없어요."));
   }
 };
 
@@ -83,12 +83,12 @@ const updateNote = async (req, res, next) => {
     );
 
     if (!updatedNote) {
-      return next(createError(404, "노트를 찾을 수 없습니다."));
+      return next(createError(404, "노트를 찾을 수 없어요."));
     }
 
-    res.status(200).json({ message: "노트가 업데이트 되었습니다." });
+    res.status(200).json({ message: "노트가 업데이트 되었어요." });
   } catch (err) {
-    next(createError(500, "노트를 업데이트하는데 실패했습니다."));
+    next(createError(500, "노트를 업데이트하는데 실패했어요."));
   }
 };
 
@@ -98,14 +98,14 @@ const deleteNote = async (req, res, next) => {
   try {
     const { _id: databaseNoteId, editorId } = await Note.findById(noteId);
     if (!databaseNoteId) {
-      return next(createError(404, "노트를 찾을 수 없습니다."));
+      return next(createError(404, "노트를 찾을 수 없어요."));
     }
 
     if (userId.toString() === editorId.toString()) {
       const deletedNote = await Note.findByIdAndDelete(noteId);
 
       if (!deletedNote) {
-        return next(createError(404, "삭제할 노트를 찾을 수 없습니다."));
+        return next(createError(404, "삭제할 노트를 찾을 수 없어요."));
       }
 
       const { blocks: deletedNoteBlocks, _id: deletedNoteId } = deletedNote;
@@ -119,7 +119,7 @@ const deleteNote = async (req, res, next) => {
 
       const user = await User.findById(userId);
       if (!user) {
-        return next(createError(404, "사용자를 찾을 수 없습니다."));
+        return next(createError(404, "사용자를 찾을 수 없어요."));
       }
       const deletedNoteIndex = userNotes.indexOf(deletedNoteId);
       if (deletedNoteIndex !== -1) {
@@ -130,14 +130,14 @@ const deleteNote = async (req, res, next) => {
       await storeNotification({
         recipientId: userId,
         noteId: deletedNoteId,
-        message: "가 삭제되었습니다. 📝",
+        message: "가 삭제되었어요.",
         title,
       });
 
-      res.status(200).json({ message: "노트를 삭제했습니다." });
+      res.status(200).json({ message: "노트를 삭제했어요." });
     }
   } catch (err) {
-    next(createError(500, "노트를 삭제하는데 실패했습니다."));
+    next(createError(500, "노트를 삭제하는데 실패했어요."));
   }
 };
 

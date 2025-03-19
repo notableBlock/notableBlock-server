@@ -26,7 +26,7 @@ const convertZwcIdsToBytesIds = async (req, res, next) => {
     req.bytesIds = bytesIds;
     next();
   } catch (err) {
-    next(createError(500, "ZWC ID 변환 중 오류가 발생했습니다."));
+    next(createError(500, "ZWC ID 변환 중 오류가 발생했어요."));
   }
 };
 

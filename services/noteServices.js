@@ -7,7 +7,7 @@ const getCurrentDate = require("../utils/getCurrentDate");
 
 const storeNote = async ({ creator, note, title, editor, baseNoteId = null }) => {
   if (!creator) {
-    next(createError(500, "노트를 생성하는데 실패했습니다."));
+    next(createError(500, "노트를 생성하는데 실패했어요."));
   }
 
   const savedNote = await Note.create({

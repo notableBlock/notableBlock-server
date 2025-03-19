@@ -23,7 +23,7 @@ const sendNotification = async (req, res, next) => {
       res.end();
     });
   } catch (err) {
-    next(createError(500, "알림을 생성하는데 실패했습니다."));
+    next(createError(500, "알림을 생성하는데 실패했어요."));
   }
 };
 
@@ -37,7 +37,7 @@ const getNotification = async (req, res, next) => {
         : [],
     });
   } catch (err) {
-    next(createError(500, "알림을 가져오는데 실패했습니다."));
+    next(createError(500, "알림을 가져오는데 실패했어요."));
   }
 };
 
@@ -48,7 +48,7 @@ const readNotification = async (req, res, next) => {
     const notification = await Notification.findById(notificationId);
     res.status(200).json(notification);
   } catch (err) {
-    next(createError(500, "알림을 찾을 수 없습니다."));
+    next(createError(500, "알림을 찾을 수 없어요."));
   }
 };
 
@@ -59,12 +59,12 @@ const deleteNotification = async (req, res, next) => {
   try {
     const deletedNotification = await Notification.findByIdAndDelete(notificationId);
     if (!deletedNotification) {
-      return next(createError(404, "삭제할 알림을 찾을 수 없습니다."));
+      return next(createError(404, "삭제할 알림을 찾을 수 없어요."));
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return next(createError(404, "사용자를 찾을 수 없습니다."));
+      return next(createError(404, "사용자를 찾을 수 없어요."));
     }
 
     const index = user.notifications.findIndex(
@@ -75,9 +75,9 @@ const deleteNotification = async (req, res, next) => {
       await user.save();
     }
 
-    res.status(200).json({ message: "알림을 삭제했습니다." });
+    res.status(200).json({ message: "알림을 삭제했어요." });
   } catch (err) {
-    next(createError(500, "알림을 삭제하는데 실패했습니다."));
+    next(createError(500, "알림을 삭제하는데 실패했어요."));
   }
 };
 
@@ -88,9 +88,9 @@ const deleteAllNotification = async (req, res, next) => {
     await Notification.deleteMany({ recipientId: userId });
     await User.findByIdAndUpdate(userId, { notifications: [] });
 
-    res.status(200).json({ message: "모든 알림이 삭제되었습니다." });
+    res.status(200).json({ message: "모든 알림이 삭제되었어요." });
   } catch (err) {
-    next(createError(500, "전체 알림을 삭제하는데 실패했습니다."));
+    next(createError(500, "전체 알림을 삭제하는데 실패했어요."));
   }
 };
 

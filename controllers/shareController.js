@@ -25,8 +25,8 @@ const shareNote = async (req, res, next) => {
     sharedNote.shared = !sharedNote.shared;
     await sharedNote.save();
 
-    const messageForCreator = `를 ${userName}이 다시 공유했습니다. ♻️`;
-    const messageForEditor = sharedNote.shared ? "를 공유했습니다. ✅" : "공유를 취소했습니다. ⛔";
+    const messageForCreator = `를 ${userName}이 다시 공유했어요.`;
+    const messageForEditor = sharedNote.shared ? "를 공유했어요." : "공유를 취소했어요.";
     const path = sharedNote.shared ? "shared" : null;
 
     await storePerRecipientNotifications({
@@ -41,7 +41,7 @@ const shareNote = async (req, res, next) => {
 
     res.status(200).json({ note: sharedNote, messageForEditor });
   } catch (err) {
-    next(createError(500, "노트를 공유하는데 실패했습니다."));
+    next(createError(500, "노트를 공유하는데 실패했어요."));
   }
 };
 
@@ -50,12 +50,12 @@ const getSharedNotes = async (req, res, next) => {
     const sharedNotes = await Note.find({ shared: true });
 
     if (!sharedNotes) {
-      return next(createError(404, "현재 공유된 노트가 없습니다."));
+      return next(createError(404, "현재 공유된 노트가 없어요."));
     }
 
     res.status(200).json({ notesId: sharedNotes.map((note) => note._id) });
   } catch (err) {
-    next(createError(500, "공유 노트를 가져오는데 실패했습니다."));
+    next(createError(500, "공유 노트를 가져오는데 실패했어요."));
   }
 };
 
@@ -67,7 +67,7 @@ const readSharedNote = async (req, res, next) => {
 
     res.status(200).json(note);
   } catch (err) {
-    next(createError(500, "해당 공유 노트를 찾을 수 없습니다."));
+    next(createError(500, "해당 공유 노트를 찾을 수 없어요."));
   }
 };
 
@@ -95,14 +95,14 @@ const copySharedNote = async (req, res, next) => {
     await storeNotification({
       recipientId: userId,
       noteId: savedNoteId,
-      message: "를 내 노트로 가져왔습니다. 📥",
+      message: "를 내 노트로 가져왔어요.",
       path: "notes",
       title,
     });
 
     res.status(201).json({ noteId: savedNoteId.toString() });
   } catch (err) {
-    next(createError(500, "공유 노트를 내 노트로 가져오는데 실패했습니다."));
+    next(createError(500, "공유 노트를 내 노트로 가져오는데 실패했어요."));
   }
 };
 
