@@ -16,7 +16,7 @@ const storeNote = async ({ creator, note, title, editor, baseNoteId = null }) =>
     creatorPicture: creator.picture,
     title,
     blocks: note.blocks ? note.blocks : note,
-    shared: false,
+    isShared: false,
     createdAt: getCurrentDate(),
     editor: editor.name,
     editorId: editor._id,

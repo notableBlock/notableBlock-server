@@ -26,7 +26,7 @@ const noteSchema = new mongoose.Schema({
     },
   ],
   baseNote: { type: mongoose.Schema.Types.ObjectId, ref: "Note" },
-  shared: { type: Boolean, required: true },
+  isShared: { type: Boolean, required: true },
   createdAt: { type: String, required: true },
   updatedAt: String,
 });

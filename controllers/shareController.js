@@ -22,12 +22,12 @@ const shareNote = async (req, res, next) => {
     const { _id: sharedNoteId, blocks: sharedNoteBlocks, creatorId } = sharedNote;
     const title = getNoteTitle(sharedNoteBlocks);
 
-    sharedNote.shared = !sharedNote.shared;
+    sharedNote.isShared = !sharedNote.isShared;
     await sharedNote.save();
 
     const messageForCreator = `를 ${userName}이 다시 공유했어요.`;
-    const messageForEditor = sharedNote.shared ? "를 공유했어요." : "공유를 취소했어요.";
-    const path = sharedNote.shared ? "shared" : null;
+    const messageForEditor = sharedNote.isShared ? "를 공유했어요." : "공유를 취소했어요.";
+    const path = sharedNote.isShared ? "shared" : null;
 
     await storePerRecipientNotifications({
       userId,
@@ -47,7 +47,7 @@ const shareNote = async (req, res, next) => {
 
 const getSharedNotes = async (req, res, next) => {
   try {
-    const sharedNotes = await Note.find({ shared: true });
+    const sharedNotes = await Note.find({ isShared: true });
 
     if (!sharedNotes) {
       return next(createError(404, "현재 공유된 노트가 없어요."));
