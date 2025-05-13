@@ -3,11 +3,18 @@ const createError = require("http-errors");
 
 const User = require("../models/User");
 
+const { oauth2Client } = require("../services/googleAuth");
+
 const isAuthenticated = async (req, res, next) => {
   const { access_token } = req.cookies;
 
-  if (!access_token) {
-    return next(createError(401, "인증 토큰이 없어요."));
+  try {
+    await oauth2Client.getTokenInfo(access_token);
+  } catch {
+    const isRefreshed = await autoLogin(req, res, next);
+    if (isRefreshed) return next();
+
+    return next(createError(401, "자동 로그인에 실패해 재로그인이 필요해요."));
   }
 
   try {
@@ -28,6 +35,46 @@ const isAuthenticated = async (req, res, next) => {
     next();
   } catch (err) {
     next(createError(500, "사용자 인증에 실패했어요."));
+  }
+};
+
+const autoLogin = async (req, res, next) => {
+  try {
+    const userId = req.cookies.user_id;
+    const user = await User.findById(userId);
+    const refresh_token = user.refresh_token;
+
+    if (!refresh_token) {
+      return next(createError(401, "Refresh Token이 없어 재로그인이 필요해요."));
+    }
+
+    oauth2Client.setCredentials({ refresh_token: refresh_token });
+    const { credentials } = await oauth2Client.refreshAccessToken();
+
+    oauth2Client.setCredentials(credentials);
+    const newAccessToken = credentials.access_token;
+    const newRefreshToken = credentials.refresh_token || refresh_token;
+
+    if (credentials.refresh_token) {
+      await User.findByIdAndUpdate(userId, { refresh_token: newRefreshToken });
+    }
+
+    res.cookie("access_token", newAccessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+    res.cookie("user_id", user._id, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+
+    req.user = user;
+
+    return true;
+  } catch {
+    return false;
   }
 };
 
