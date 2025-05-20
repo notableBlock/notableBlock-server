@@ -1,13 +1,15 @@
 const mongoose = require("mongoose");
 
+const { ObjectId } = mongoose.Schema.Types;
+
 const userSchema = new mongoose.Schema({
   googleId: { type: String, required: true },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  picture: String,
+  picture: { type: String, required: true },
   refresh_token: { type: String, required: true },
-  notes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Note" }],
-  notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Notification" }],
+  notes: [{ type: ObjectId, ref: "Note" }],
+  notifications: [{ type: ObjectId, ref: "Notification" }],
 });
 
 userSchema.set("timestamps", { createdAt: true, updatedAt: false });

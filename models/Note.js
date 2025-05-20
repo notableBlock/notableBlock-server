@@ -1,13 +1,12 @@
 const mongoose = require("mongoose");
 
+const { ObjectId } = mongoose.Schema.Types;
+
 const noteSchema = new mongoose.Schema({
-  creator: { type: mongoose.Schema.Types.String, ref: "User" },
-  creatorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  creatorPicture: { type: mongoose.Schema.Types.String, ref: "User" },
-  editor: { type: mongoose.Schema.Types.String, ref: "User" },
-  editorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  editorPicture: { type: mongoose.Schema.Types.String, ref: "User" },
-  blockchainRef: { type: String },
+  creator: { type: String, required: true },
+  creatorId: { type: ObjectId, ref: "User", required: true },
+  editor: { type: String, required: true },
+  editorId: { type: ObjectId, ref: "User", required: true },
   title: { type: String, required: true },
   blocks: [
     {
@@ -25,7 +24,7 @@ const noteSchema = new mongoose.Schema({
       },
     },
   ],
-  baseNote: { type: mongoose.Schema.Types.ObjectId, ref: "Note" },
+  baseNote: { type: ObjectId, ref: "Note" },
   isShared: { type: Boolean, required: true },
   createdAt: { type: String, required: true },
   updatedAt: String,
