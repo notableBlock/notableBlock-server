@@ -5,8 +5,8 @@ const contractAddress = process.env.BLOCKCHAIN_CONTRACT_ADDRESS;
 
 const getContract = async () => {
   const provider = new ethers.JsonRpcProvider(process.env.BLOCKCHAIN_PROVIDER);
-  const signer = await provider.getSigner();
-  const contract = new ethers.Contract(contractAddress, contractABI, signer);
+  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  const contract = new ethers.Contract(contractAddress, contractABI, wallet);
 
   return contract;
 };
