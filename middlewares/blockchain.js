@@ -19,10 +19,11 @@ const convertIdsToBlockchain = async (req, res, next) => {
       creatorIdFromBlockchain === NO_BLOCKCHAIN_DATA ||
       noteIdFromBlockchain === NO_BLOCKCHAIN_DATA
     ) {
-      await blockchainContract.addNoteData(
+      const transactionResponse = await blockchainContract.addNoteData(
         ethers.encodeBytes32String(creatorId.toString()),
         ethers.encodeBytes32String(noteId)
       );
+      await transactionResponse.wait();
 
       const blockchainIds = await getBlockchainData(blockchainContract, creatorId, noteId);
       req.blockchainData = blockchainIds;
@@ -32,6 +33,7 @@ const convertIdsToBlockchain = async (req, res, next) => {
 
     next();
   } catch (err) {
+    console.log(err);
     next(createError(500, "ID를 블록체인 데이터로 변환하던 중 오류가 발생했어요."));
   }
 };
@@ -75,6 +77,7 @@ const decodeBytesIdsToBlockchainIds = async (req, res, next) => {
     req.blockchainIds = blockchainIds;
     next();
   } catch (err) {
+    console.log(err);
     next(createError(500, "블록체인 데이터를 ID로 변환하던중 오류가 발생했어요."));
   }
 };
