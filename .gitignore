@@ -24,3 +24,8 @@ dist-ssr
 *.sln
 *.sw?
 uploads
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
