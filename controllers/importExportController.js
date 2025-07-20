@@ -7,10 +7,12 @@ const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
 const storeNote = require("../services/noteServices");
+const { storePerRecipientNotifications } = require("../services/notificationServices");
 const {
-  storePerRecipientNotifications,
-} = require("../services/notificationServices");
-const runCommand = require("../services/shellCommandServices");
+  runCommand,
+  setExtendedAttributes,
+  createTarArchive,
+} = require("../services/shellCommandServices");
 
 const getNoteTitle = require("../utils/getNoteTitle");
 const { blockToMarkdown } = require("../utils/convertBlock");
@@ -65,20 +67,28 @@ const exportNote = async (req, res, next) => {
   const { _id: userId, name: userName } = user;
   const { noteId } = params;
   const { zwcCreatorId, zwcNoteId } = zwcIds;
+  const platform = os.platform();
+
+  if (platform === "win32") {
+    return next(
+      createError(
+        500,
+        "현재 윈도우 운영체제에선 파일 확장 속성 설정이 지원되지 않아 로컬로 내보내기 기능 이용이 어려워요."
+      )
+    );
+  }
 
   try {
     const { blocks, creatorId } = await findNoteById(noteId);
 
-    const tempDirectory = path.join(os.tmpdir(), "notableBlock-temp");
-    fs.mkdirSync(tempDirectory, { recursive: true });
-
+    const tempDirectory = path.join(process.env.TEMP_DIR || os.tmpdir(), "notableBlock-temp");
     const assetsDirectory = path.join(tempDirectory, "assets");
+    fs.mkdirSync(tempDirectory, { recursive: true });
     fs.mkdirSync(assetsDirectory, { recursive: true });
 
     const imagePaths = blocks
       .filter(({ imageUrl }) => imageUrl)
       .map(({ imageUrl }) => `public/${imageUrl}`);
-
     imagePaths.forEach((imagePath) => {
       const imageFilename = path.basename(imagePath);
       const assetsImagePath = path.join(assetsDirectory, imageFilename);
@@ -89,13 +99,17 @@ const exportNote = async (req, res, next) => {
     const markdown = blockToMarkdown(blocks);
     const title = getNoteTitle(blocks);
 
+    const tarArchivePath = path.join(tempDirectory, `${title}.tar`);
     const mdFilePath = path.join(tempDirectory, `${title}.md`);
     fs.writeFileSync(mdFilePath, markdown);
-    await runCommand("/usr/bin/xattr", ["-w", "user.creatorId", zwcCreatorId, mdFilePath]);
-    await runCommand("/usr/bin/xattr", ["-w", "user.noteId", zwcNoteId, mdFilePath]);
 
-    const tarArchivePath = path.join(tempDirectory, `${title}.tar`);
-    await runCommand("tar", ["-cf", tarArchivePath, "-C", tempDirectory, `${title}.md`, "assets"]);
+    try {
+      await setExtendedAttributes(platform, mdFilePath, zwcCreatorId, zwcNoteId);
+      await createTarArchive(platform, tarArchivePath, tempDirectory, title);
+    } catch (err) {
+      console.log(err);
+      return next(createError(500, err.message));
+    }
 
     const messageForEditor = "를 로컬로 내보냈어요.";
     const messageForCreator = `를 ${userName}이 로컬로 내보냈어요.`;
@@ -113,11 +127,10 @@ const exportNote = async (req, res, next) => {
       "Content-Disposition",
       `attachment; filename*=UTF-8''${encodeURIComponent(title)}.tar`
     );
-    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
     res.setHeader("Content-Type", "application/x-tar");
-
     res.download(tarArchivePath, `${title}.tar`, (err) => {
       if (err) {
+        console.log(err);
         return next(createError(500, "파일 전송 중 오류가 발생했어요."));
       }
 
@@ -126,6 +139,7 @@ const exportNote = async (req, res, next) => {
       fs.rmSync(assetsDirectory, { recursive: true, force: true });
     });
   } catch (err) {
+    console.log(err);
     next(createError(500, "노트를 로컬로 내보내는데 실패했어요."));
   }
 };
@@ -138,7 +152,7 @@ const archiveUploadedFiles = async (req, res, next) => {
   }
 
   try {
-    const tempDirectory = path.join(os.tmpdir(), "notableBlock-temp");
+    const tempDirectory = path.join(process.env.TEMP_DIR || os.tmpdir(), "notableBlock-temp");
     fs.mkdirSync(tempDirectory, { recursive: true });
     const downloadDirectory = path.join(os.homedir(), "Downloads");
 
@@ -153,14 +167,14 @@ const archiveUploadedFiles = async (req, res, next) => {
       .join(", ");
 
     if (!tarTitle) {
-      return next(createError(404, "압축할 마크다운 파일이 없어요."));
+      return next(createError(404, "아카이브할 마크다운 파일이 없어요."));
     }
 
     const tarArchivePath = path.join(tempDirectory, `${tarTitle}.tar`);
     const missingFiles = filesData.filter(({ fullPath }) => !fs.existsSync(fullPath));
 
     if (missingFiles.length > 0) {
-      return next(createError(404, "압축할 파일이 다운로드 폴더에 존재하지 않아요."));
+      return next(createError(404, "아카이브할 파일이 다운로드 폴더에 존재하지 않아요."));
     }
 
     try {
@@ -172,14 +186,14 @@ const archiveUploadedFiles = async (req, res, next) => {
         ...filesData.map(({ name }) => name),
       ]);
     } catch (err) {
-      return next(createError(500, "tar 압축 중 오류가 발생했어요."));
+      console.log(err);
+      return next(createError(500, "tar 아카이브 중 오류가 발생했어요."));
     }
 
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="${encodeURIComponent(tarTitle)}"; filename*=UTF-8''${encodeURIComponent(tarTitle)}.tar`
     );
-    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
     res.setHeader("Content-Type", "application/x-tar");
 
     res.download(tarArchivePath, `${tarTitle}.tar`, (err) => {
@@ -191,7 +205,8 @@ const archiveUploadedFiles = async (req, res, next) => {
       fs.unlinkSync(tarArchivePath);
     });
   } catch (err) {
-    next(createError(500, "tar 압축에 실패했어요."));
+    console.log(err);
+    next(createError(500, "tar 아카이브에 실패했어요."));
   }
 };
 

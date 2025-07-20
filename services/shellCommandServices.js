@@ -28,4 +28,27 @@ const runCommand = (command, commandArguments, isBlockchainIdRequired = false) =
   });
 };
 
-module.exports = runCommand;
+const setExtendedAttributes = async (platform, filePath, creatorId, noteId) => {
+  switch (platform) {
+    case "darwin":
+      await runCommand("/usr/bin/xattr", ["-w", "user.creatorId", creatorId, filePath]);
+      await runCommand("/usr/bin/xattr", ["-w", "user.noteId", noteId, filePath]);
+      break;
+    case "linux":
+      await runCommand("setfattr", ["-n", "user.creatorId", "-v", creatorId, filePath]);
+      await runCommand("setfattr", ["-n", "user.noteId", "-v", noteId, filePath]);
+      break;
+    default:
+      throw new Error("지원되지 않는 운영체제에요.");
+  }
+};
+
+const createTarArchive = async (platform, tarPath, tempDirectory, title) => {
+  const baseArguments = ["-cf", tarPath, "-C", tempDirectory, `${title}.md`, "assets"];
+  const tarArguments =
+    platform === "linux" ? ["--xattrs", "--xattrs-include=*", ...baseArguments] : baseArguments;
+
+  await runCommand("tar", tarArguments);
+};
+
+module.exports = { runCommand, setExtendedAttributes, createTarArchive };
