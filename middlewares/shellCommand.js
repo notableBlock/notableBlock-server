@@ -3,17 +3,29 @@ const path = require("path");
 const os = require("os");
 const createError = require("http-errors");
 
-const runCommand = require("../services/shellCommandServices");
+const { runCommand, getExtendedAttributes } = require("../services/shellCommandServices");
 
 const extractTar = async (req, res, next) => {
   const tarFiles = req.files;
+  const platform = os.platform();
+
+  if (platform === "win32") {
+    return next(
+      createError(
+        500,
+        "현재 윈도우 운영체제에선 파일 확장 속성 설정이 지원되지 않아 파일 아카이브 해제 기능 이용이 어려워요."
+      )
+    );
+  }
 
   if (!tarFiles.length) {
     return next(createError(400, "파일이 제공되지 않았어요."));
   }
 
   try {
-    const tempDirectory = await fs.promises.mkdtemp(path.join(os.tmpdir(), "notableBlock-temp-"));
+    const tempDirectory = await fs.promises.mkdtemp(
+      path.join(process.env.TEMP_DIR || os.tmpdir(), "notableBlock-temp-")
+    );
 
     await Promise.all(
       tarFiles.map(async ({ path }) => {
@@ -40,22 +52,15 @@ const extractTar = async (req, res, next) => {
         const mdFilePath = path.join(tempDirectory, file);
 
         try {
-          const creatorId = await runCommand(
-            "/usr/bin/xattr",
-            ["-p", "user.creatorId", mdFilePath],
-            true
-          );
-          const noteId = await runCommand(
-            "/usr/bin/xattr",
-            ["-p", "user.noteId", mdFilePath],
-            true
-          );
+          const { creatorId, noteId } = await getExtendedAttributes(platform, mdFilePath);
+
           return {
             mdFilePath,
             extractedCreatorId: creatorId,
             extractedNoteId: noteId,
           };
         } catch (err) {
+          console.log(err);
           return null;
         }
       })
@@ -73,7 +78,8 @@ const extractTar = async (req, res, next) => {
 
     next();
   } catch (err) {
-    next(createError(500, "파일 압축 해제 중 오류가 발생했어요."));
+    console.log(err);
+    next(createError(500, "파일 아카이브 해제 중 오류가 발생했어요."));
   }
 };
 

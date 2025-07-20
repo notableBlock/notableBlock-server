@@ -43,6 +43,31 @@ const setExtendedAttributes = async (platform, filePath, creatorId, noteId) => {
   }
 };
 
+const getExtendedAttributes = async (platform, filePath) => {
+  switch (platform) {
+    case "darwin":
+      return {
+        creatorId: await runCommand("/usr/bin/xattr", ["-p", "user.creatorId", filePath], true),
+        noteId: await runCommand("/usr/bin/xattr", ["-p", "user.noteId", filePath], true),
+      };
+    case "linux":
+      return {
+        creatorId: await runCommand(
+          "getfattr",
+          ["-n", "user.creatorId", "--only-values", filePath],
+          true
+        ),
+        noteId: await runCommand(
+          "getfattr",
+          ["-n", "user.noteId", "--only-values", filePath],
+          true
+        ),
+      };
+    default:
+      throw new Error("지원되지 않는 운영체제에요.");
+  }
+};
+
 const createTarArchive = async (platform, tarPath, tempDirectory, title) => {
   const baseArguments = ["-cf", tarPath, "-C", tempDirectory, `${title}.md`, "assets"];
   const tarArguments =
@@ -51,4 +76,4 @@ const createTarArchive = async (platform, tarPath, tempDirectory, title) => {
   await runCommand("tar", tarArguments);
 };
 
-module.exports = { runCommand, setExtendedAttributes, createTarArchive };
+module.exports = { runCommand, setExtendedAttributes, getExtendedAttributes, createTarArchive };
