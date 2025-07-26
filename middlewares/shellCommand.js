@@ -61,7 +61,11 @@ const extractTar = async (req, res, next) => {
           };
         } catch (err) {
           console.log(err);
-          return null;
+          return {
+            mdFilePath,
+            extractedCreatorId: null,
+            extractedNoteId: null,
+          };
         }
       })
     );

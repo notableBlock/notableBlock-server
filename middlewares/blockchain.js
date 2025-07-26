@@ -4,7 +4,7 @@ const createError = require("http-errors");
 const findNoteById = require("../services/findNoteById");
 const { getContract, getBlockchainData } = require("../services/ethersServices");
 
-const { NO_BLOCKCHAIN_DATA } = require("../utils/constants");
+const { EMPTY_BYTES32 } = require("../utils/constants");
 
 const convertIdsToBlockchain = async (req, res, next) => {
   const { noteId } = req.params;
@@ -16,8 +16,8 @@ const convertIdsToBlockchain = async (req, res, next) => {
     const [creatorIdFromBlockchain, noteIdFromBlockchain] = blockChainData;
 
     if (
-      creatorIdFromBlockchain === NO_BLOCKCHAIN_DATA ||
-      noteIdFromBlockchain === NO_BLOCKCHAIN_DATA
+      creatorIdFromBlockchain === EMPTY_BYTES32 ||
+      noteIdFromBlockchain === EMPTY_BYTES32
     ) {
       const transactionResponse = await blockchainContract.addNoteData(
         ethers.encodeBytes32String(creatorId.toString()),
@@ -58,13 +58,15 @@ const decodeBytesIdsToBlockchainIds = async (req, res, next) => {
         );
 
         if (
-          creatorIdFromBlockchain === NO_BLOCKCHAIN_DATA ||
-          noteIdFromBlockchain === NO_BLOCKCHAIN_DATA
+          creatorIdFromBlockchain === EMPTY_BYTES32 ||
+          noteIdFromBlockchain === EMPTY_BYTES32
         ) {
-          await blockchainContract.addNoteData(
+          const transactionResponse = await blockchainContract.addNoteData(
             ethers.encodeBytes32String(decodedCreatorId),
             ethers.encodeBytes32String(decodedNoteId)
           );
+
+          await transactionResponse.wait();
         }
 
         return {

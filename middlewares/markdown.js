@@ -24,6 +24,7 @@ const convertMarkdownToBlocks = async (req, res, next) => {
     req.mdFilesBlocks = mdFilesBlocks;
     next();
   } catch (err) {
+    console.log(err);
     next(createError(500, "마크다운 변환 중 오류가 발생했어요."));
   }
 };
