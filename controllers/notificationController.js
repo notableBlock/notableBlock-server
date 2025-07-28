@@ -9,16 +9,22 @@ const sendNotification = async (req, res, next) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
 
   try {
     const notificationFilter = [{ $match: { "fullDocument.recipientId": user._id } }];
     const notificationStream = Notification.watch(notificationFilter);
+
+    const pingInterval = setInterval(() => {
+      res.write(":\n\n");
+    }, 15000);
 
     notificationStream.on("change", (change) => {
       res.write(`data: ${JSON.stringify(change)}\n\n`);
     });
 
     req.on("close", () => {
+      clearInterval(pingInterval);
       notificationStream.close();
       res.end();
     });
