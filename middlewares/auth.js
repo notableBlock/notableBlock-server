@@ -60,6 +60,7 @@ const autoLogin = async (req, res, next) => {
     }
 
     res.cookie("access_token", newAccessToken, {
+      domain: process.env.COOKIE_DOMAIN,
       httpOnly: true,
       secure: true,
       sameSite: "strict",

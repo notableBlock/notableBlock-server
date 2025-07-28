@@ -15,6 +15,7 @@ const login = async (req, res, next) => {
     const savedUser = await findUser({ googleId, name, picture, email, refresh_token });
 
     res.cookie("access_token", access_token, {
+      domain: process.env.COOKIE_DOMAIN,
       httpOnly: true,
       secure: true,
       sameSite: "strict",
@@ -27,7 +28,7 @@ const login = async (req, res, next) => {
 
     res.status(200).json({
       message: "로그인에 성공했어요.",
-      profile: { name: savedUser.name, picture: savedUser.picture, id: savedUser._id },
+      profile: { name: savedUser.name, picture: savedUser.picture, userId: savedUser._id },
     });
   } catch (err) {
     next(createError(500, "로그인에 실패했어요."));
@@ -41,6 +42,7 @@ const logout = async (req, res, next) => {
     await User.findByIdAndUpdate(userId, { refresh_token: "" });
 
     res.clearCookie("access_token", {
+      domain: process.env.COOKIE_DOMAIN,
       httpOnly: true,
       secure: true,
       sameSite: "strict",
