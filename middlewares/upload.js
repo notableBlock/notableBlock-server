@@ -1,15 +1,18 @@
 const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const os = require("os");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, "public/uploads/images");
-    } else {
-      cb(null, "public/uploads");
-    }
+    const tempDirectory = path.join(process.env.TEMP_DIR || os.tmpdir(), "notableBlock-temp");
+    fs.mkdirSync(tempDirectory, { recursive: true });
+
+    cb(null, tempDirectory);
+    req.tempDirectory = tempDirectory;
   },
 
-  filename: (req, file, cb) => {
+  filename: async (req, file, cb) => {
     const decodedName = Buffer.from(file.originalname, "latin1").toString("utf-8");
 
     cb(null, decodedName);

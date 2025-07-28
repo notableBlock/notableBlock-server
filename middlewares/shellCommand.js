@@ -6,7 +6,7 @@ const createError = require("http-errors");
 const { runCommand, getExtendedAttributes } = require("../services/shellCommandServices");
 
 const extractTar = async (req, res, next) => {
-  const tarFiles = req.files;
+  const { files: tarFiles, tempDirectory } = req;
   const platform = os.platform();
 
   if (platform === "win32") {
@@ -23,10 +23,6 @@ const extractTar = async (req, res, next) => {
   }
 
   try {
-    const tempDirectory = await fs.promises.mkdtemp(
-      path.join(process.env.TEMP_DIR || os.tmpdir(), "notableBlock-temp-")
-    );
-
     await Promise.all(
       tarFiles.map(async ({ path }) => {
         await runCommand("tar", ["--xattrs", "-xvf", path, "-C", tempDirectory], true);
@@ -78,7 +74,6 @@ const extractTar = async (req, res, next) => {
     req.extractedIds = extractedIds;
     req.mdFilePaths = mdFilePaths;
     req.imageFiles = imageFiles;
-    req.tempDirectory = tempDirectory;
 
     next();
   } catch (err) {
