@@ -69,7 +69,9 @@ const getExtendedAttributes = async (platform, filePath) => {
 };
 
 const createTarArchive = async (platform, tarPath, tempDirectory, title) => {
-  const baseArguments = ["-cf", tarPath, "-C", tempDirectory, `${title}.md`, "assets"];
+  const titles = Array.isArray(title) ? title : [title];
+  const baseArguments = ["-cf", tarPath, "-C", tempDirectory, ...titles, "assets"];
+
   const tarArguments =
     platform === "linux" ? ["--xattrs", "--xattrs-include=*", ...baseArguments] : baseArguments;
 

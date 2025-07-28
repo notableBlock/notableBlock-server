@@ -8,11 +8,7 @@ const User = require("../models/User");
 const findNoteById = require("../services/findNoteById");
 const storeNote = require("../services/noteServices");
 const { storePerRecipientNotifications } = require("../services/notificationServices");
-const {
-  runCommand,
-  setExtendedAttributes,
-  createTarArchive,
-} = require("../services/shellCommandServices");
+const { setExtendedAttributes, createTarArchive } = require("../services/shellCommandServices");
 
 const getNoteTitle = require("../utils/getNoteTitle");
 const { blockToMarkdown } = require("../utils/convertBlock");
@@ -56,6 +52,7 @@ const importNote = async (req, res, next) => {
       notes: allNotes,
     });
   } catch (err) {
+    console.log(err);
     next(createError(500, "노트를 로컬에서 가져오는데 실패했어요."));
   } finally {
     await fs.promises.rm(tempDirectory, { recursive: true, force: true });
@@ -105,7 +102,7 @@ const exportNote = async (req, res, next) => {
 
     try {
       await setExtendedAttributes(platform, mdFilePath, zwcCreatorId, zwcNoteId);
-      await createTarArchive(platform, tarArchivePath, tempDirectory, title);
+      await createTarArchive(platform, tarArchivePath, tempDirectory, `${title}.md`);
     } catch (err) {
       console.log(err);
       return next(createError(500, err.message));
@@ -145,26 +142,28 @@ const exportNote = async (req, res, next) => {
 };
 
 const archiveUploadedFiles = async (req, res, next) => {
-  const { files, isMdFileExist } = req;
+  const { files, tempDirectory, isMdFileExist } = req;
+  const platform = os.platform();
 
   if (!isMdFileExist) {
-    return next(createError(404, "마크다운이 존재하지 않아요."));
+    return next(createError(404, "마크다운 파일이 존재하지 않아요."));
   }
-
   try {
-    const tempDirectory = path.join(process.env.TEMP_DIR || os.tmpdir(), "notableBlock-temp");
-    fs.mkdirSync(tempDirectory, { recursive: true });
-    const downloadDirectory = path.join(os.homedir(), "Downloads");
+    const assetsDirectory = path.join(tempDirectory, "assets");
+    fs.mkdirSync(assetsDirectory, { recursive: true });
 
     const filesData = files.map(({ filename }) => ({
       name: filename,
-      fullPath: path.join(downloadDirectory, filename),
+      fullPath: path.join(tempDirectory, filename),
     }));
+    const mdFiles = filesData.filter(({ name }) => name.endsWith(".md"));
+    const assetsFiles = filesData.filter(({ name }) => !name.endsWith(".md"));
 
-    const tarTitle = filesData
-      .filter(({ name }) => name.endsWith(".md"))
-      .map(({ name }) => path.basename(name, ".md"))
-      .join(", ");
+    assetsFiles.forEach(({ name, fullPath }) => {
+      fs.copyFileSync(fullPath, path.join(assetsDirectory, name));
+    });
+
+    const tarTitle = mdFiles.map(({ name }) => path.basename(name, ".md")).join(", ");
 
     if (!tarTitle) {
       return next(createError(404, "아카이브할 마크다운 파일이 없어요."));
@@ -174,20 +173,19 @@ const archiveUploadedFiles = async (req, res, next) => {
     const missingFiles = filesData.filter(({ fullPath }) => !fs.existsSync(fullPath));
 
     if (missingFiles.length > 0) {
-      return next(createError(404, "아카이브할 파일이 다운로드 폴더에 존재하지 않아요."));
+      return next(createError(404, "아카이브할 파일이 폴더에 존재하지 않아요."));
     }
 
     try {
-      await runCommand("tar", [
-        "-cf",
+      await createTarArchive(
+        platform,
         tarArchivePath,
-        "-C",
-        downloadDirectory,
-        ...filesData.map(({ name }) => name),
-      ]);
+        tempDirectory,
+        mdFiles.map(({ name }) => name)
+      );
     } catch (err) {
       console.log(err);
-      return next(createError(500, "tar 아카이브 중 오류가 발생했어요."));
+      return next(createError(500, "아카이브 중 오류가 발생했어요."));
     }
 
     res.setHeader(
@@ -198,15 +196,17 @@ const archiveUploadedFiles = async (req, res, next) => {
 
     res.download(tarArchivePath, `${tarTitle}.tar`, (err) => {
       if (err) {
+        console.log(err);
         return next(createError(500, "파일 전송 중 오류가 발생했어요."));
       }
 
       files.forEach(({ path }) => fs.unlinkSync(path));
       fs.unlinkSync(tarArchivePath);
+      fs.rmSync(assetsDirectory, { recursive: true, force: true });
     });
   } catch (err) {
     console.log(err);
-    next(createError(500, "tar 아카이브에 실패했어요."));
+    next(createError(500, "아카이브에 실패했어요."));
   }
 };
 
