@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www",
-    "prepare": "husky"
+    "start": "NODE_ENV=production node ./bin/www",
+    "start:dev": "nodemon ./bin/www"
   },
   "lint-staged": {
     "src/**/*.(js)": [
