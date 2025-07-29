@@ -27,10 +27,11 @@ jobs:
       - name: Deploy to Elastic Beanstalk
         run: |
           zip -r deploy.zip . -x '*.git*'
+          aws s3 cp deploy.zip s3://${{ secrets.EB_S3_BUCKET }}/deploy.zip
           aws elasticbeanstalk create-application-version \
             --application-name notable-block-server \
             --version-label $GITHUB_SHA \
-            --source-bundle S3Bucket=$EB_S3_BUCKET,S3Key=deploy.zip
+            --source-bundle S3Bucket=${{ secrets.EB_S3_BUCKET }},S3Key=deploy.zip
 
           aws elasticbeanstalk update-environment \
             --environment-name Notable-block-server-env \
