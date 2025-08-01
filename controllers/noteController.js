@@ -4,8 +4,7 @@ const createError = require("http-errors");
 const Note = require("../models/Note");
 const User = require("../models/User");
 
-const findNoteById = require("../services/findNoteById");
-const { storeNote } = require("../services/noteServices");
+const { storeNote, findNoteById } = require("../services/noteServices");
 const { storeNotification } = require("../services/notificationServices");
 const clearImage = require("../services/cleanUpServices");
 

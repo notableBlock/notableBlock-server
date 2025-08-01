@@ -3,8 +3,7 @@ const createError = require("http-errors");
 const Note = require("../models/Note");
 const User = require("../models/User");
 
-const findNoteById = require("../services/findNoteById");
-const { storeNote, processImageBlock } = require("../services/noteServices");
+const { storeNote, findNoteById, processImageBlock } = require("../services/noteServices");
 const {
   storeNotification,
   storePerRecipientNotifications,

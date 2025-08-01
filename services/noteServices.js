@@ -33,6 +33,17 @@ const storeNote = async ({ creator, note, title, editor, baseNoteId = null }) =>
   return savedNote;
 };
 
+const findNoteById = async (noteId) => {
+  try {
+    const note = await Note.findById(noteId);
+    if (!note) throw new Error("소유한 노트가 없어요.");
+
+    return note;
+  } catch (err) {
+    throw new Error("노트를 찾을 수 없어요.");
+  }
+};
+
 const processImageBlock = async (blocks) => {
   const imageBlocks = blocks.filter(({ tag }) => tag === "img");
   if (imageBlocks.length === 0) return blocks;
@@ -65,4 +76,4 @@ const processImageBlock = async (blocks) => {
   }
 };
 
-module.exports = { storeNote, processImageBlock };
+module.exports = { storeNote, findNoteById, processImageBlock };
