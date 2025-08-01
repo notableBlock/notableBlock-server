@@ -3,7 +3,7 @@ const createError = require("http-errors");
 const User = require("../models/User");
 
 const { getGoogleUser } = require("../services/googleAuth");
-const { findUser } = require("../services/findUser");
+const findUser = require("../services/userServices");
 
 const login = async (req, res, next) => {
   try {

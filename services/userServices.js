@@ -21,4 +21,4 @@ const findUser = async ({ googleId, name, picture, email, refresh_token }) => {
   return user;
 };
 
-module.exports = { findUser };
+module.exports = findUser;
