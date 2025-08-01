@@ -4,7 +4,7 @@ const Note = require("../models/Note");
 const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
-const storeNote = require("../services/noteServices");
+const { storeNote, processImageBlock } = require("../services/noteServices");
 const {
   storeNotification,
   storePerRecipientNotifications,
@@ -67,6 +67,7 @@ const readSharedNote = async (req, res, next) => {
 
     res.status(200).json(note);
   } catch (err) {
+    console.log(err);
     next(createError(500, "해당 공유 노트를 찾을 수 없어요."));
   }
 };
@@ -82,10 +83,11 @@ const copySharedNote = async (req, res, next) => {
 
     const creator = await User.findById(creatorId);
     const title = getNoteTitle(originalNoteBlocks);
+    const newBlocks = await processImageBlock(originalNoteBlocks);
 
     const savedNote = await storeNote({
       creator,
-      note: originalNote,
+      note: { ...originalNote, blocks: newBlocks },
       title,
       editor: user,
       baseNoteId: originalNoteId,
@@ -102,6 +104,7 @@ const copySharedNote = async (req, res, next) => {
 
     res.status(201).json({ noteId: savedNoteId.toString() });
   } catch (err) {
+    console.log(err);
     next(createError(500, "공유 노트를 내 노트로 가져오는데 실패했어요."));
   }
 };

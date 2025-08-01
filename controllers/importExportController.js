@@ -6,7 +6,7 @@ const fs = require("fs");
 const User = require("../models/User");
 
 const findNoteById = require("../services/findNoteById");
-const storeNote = require("../services/noteServices");
+const { storeNote } = require("../services/noteServices");
 const { storePerRecipientNotifications } = require("../services/notificationServices");
 const { setExtendedAttributes, createTarArchive } = require("../services/shellCommandServices");
 

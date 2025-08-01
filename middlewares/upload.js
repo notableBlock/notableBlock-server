@@ -1,4 +1,3 @@
-const { S3Client } = require("@aws-sdk/client-s3");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
 const path = require("path");
@@ -6,13 +5,9 @@ const fs = require("fs");
 const os = require("os");
 const createError = require("http-errors");
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+const { s3 } = require("../services/s3Services");
+
+const objectId = require("../utils/objectId");
 
 const diskStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -31,12 +26,12 @@ const diskStorage = multer.diskStorage({
 });
 
 const s3Storage = multerS3({
-  s3: s3,
+  s3,
   bucket: process.env.S3_BUCKET,
   key: (req, file, cb) => {
     const decodedName = Buffer.from(file.originalname, "latin1").toString("utf-8");
 
-    cb(null, `${Date.now().toString()}-${decodedName}`);
+    cb(null, `${objectId()}-${decodedName}`);
   },
 });
 
