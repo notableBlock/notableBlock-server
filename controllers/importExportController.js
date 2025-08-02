@@ -84,7 +84,7 @@ const exportNote = async (req, res, next) => {
     fs.mkdirSync(assetsDirectory, { recursive: true });
 
     const imageS3Keys = blocks
-      .filter(({ imageUrl }) => !!imageUrl && imageUrl.includes("/"))
+      .filter(({ tag }) => tag === "img")
       .map(({ imageUrl }) => imageUrl.split("/").pop());
 
     await Promise.all(

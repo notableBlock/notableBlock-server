@@ -106,7 +106,7 @@ const deleteNote = async (req, res, next) => {
       const title = getNoteTitle(deletedNoteBlocks);
 
       const s3Keys = deletedNoteBlocks
-        .filter(({ imageUrl }) => !!imageUrl && imageUrl.includes("/"))
+        .filter(({ tag }) => tag === "img")
         .map(({ imageUrl }) => imageUrl.split("/").pop());
 
       await deleteS3Objects(s3Keys);
