@@ -58,7 +58,7 @@ const chooseStorage = (req) => (req.query.s3 === "true" ? s3Storage : diskStorag
 
 const dynamicUpload = (fieldName, type) => {
   return (req, res, next) => {
-    const storage = process.env.NODE_ENV === "production" ? chooseStorage(req) : diskStorage;
+    const storage = chooseStorage(req);
 
     const upload = multer({
       storage,

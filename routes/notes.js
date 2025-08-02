@@ -53,6 +53,6 @@ router.get("/:noteId/download", convertIdsToBlockchain, convertIdsToZwcIds, expo
 
 router.post("/uploads", ...importNoteMiddlewares, importNote);
 router.post("/uploads/archive", dynamicUpload("files", "array"), archiveUploadedFiles);
-router.delete("/uploads/images/:imageName", removeImageFromNote);
+router.delete("/images/:imageName", removeImageFromNote);
 
 module.exports = router;

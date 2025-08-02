@@ -1,6 +1,6 @@
 const createError = require("http-errors");
 
-const clearImage = require("../services/cleanUpServices");
+const { deleteS3Object } = require("../services/s3Services");
 
 const uploadImageToNote = async (req, res, next) => {
   const { key } = req.file;
@@ -18,15 +18,12 @@ const uploadImageToNote = async (req, res, next) => {
 };
 
 const removeImageFromNote = async (req, res, next) => {
-  const { imageName } = req.params;
+  const { imageName: s3Key } = req.params;
 
-  if (!imageName) {
-    return next(createError(404, "이미지를 찾을 수 없어요."));
-  }
+  if (!s3Key) return next(createError(404, "이미지를 찾을 수 없어요."));
 
   try {
-    clearImage(imageName);
-
+    await deleteS3Object(s3Key);
     res.status(200).json({ message: "이미지가 정상적으로 삭제되었어요." });
   } catch (err) {
     console.log(err);

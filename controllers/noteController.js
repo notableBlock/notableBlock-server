@@ -6,7 +6,7 @@ const User = require("../models/User");
 
 const { storeNote, findNoteById } = require("../services/noteServices");
 const { storeNotification } = require("../services/notificationServices");
-const clearImage = require("../services/cleanUpServices");
+const { deleteS3Objects } = require("../services/s3Services");
 
 const getCurrentDate = require("../utils/getCurrentDate");
 const getNoteTitle = require("../utils/getNoteTitle");
@@ -96,30 +96,24 @@ const deleteNote = async (req, res, next) => {
   const { noteId } = req.params;
   try {
     const { _id: databaseNoteId, editorId } = await Note.findById(noteId);
-    if (!databaseNoteId) {
-      return next(createError(404, "노트를 찾을 수 없어요."));
-    }
+    if (!databaseNoteId) return next(createError(404, "노트를 찾을 수 없어요."));
 
     if (userId.toString() === editorId.toString()) {
       const deletedNote = await Note.findByIdAndDelete(noteId);
-
-      if (!deletedNote) {
-        return next(createError(404, "삭제할 노트를 찾을 수 없어요."));
-      }
+      if (!deletedNote) return next(createError(404, "삭제할 노트를 찾을 수 없어요."));
 
       const { blocks: deletedNoteBlocks, _id: deletedNoteId } = deletedNote;
       const title = getNoteTitle(deletedNoteBlocks);
 
-      deletedNoteBlocks
-        .filter(({ imageUrl }) => imageUrl)
-        .forEach(({ imageUrl }) => {
-          clearImage(path.basename(imageUrl));
-        });
+      const s3Keys = deletedNoteBlocks
+        .filter(({ imageUrl }) => !!imageUrl && imageUrl.includes("/"))
+        .map(({ imageUrl }) => imageUrl.split("/").pop());
+
+      await deleteS3Objects(s3Keys);
 
       const user = await User.findById(userId);
-      if (!user) {
-        return next(createError(404, "사용자를 찾을 수 없어요."));
-      }
+      if (!user) return next(createError(404, "사용자를 찾을 수 없어요."));
+
       const deletedNoteIndex = userNotes.indexOf(deletedNoteId);
       if (deletedNoteIndex !== -1) {
         user.notes.splice(deletedNoteIndex, 1);
