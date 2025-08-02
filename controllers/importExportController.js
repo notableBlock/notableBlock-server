@@ -8,6 +8,7 @@ const User = require("../models/User");
 const { storeNote, findNoteById } = require("../services/noteServices");
 const { storePerRecipientNotifications } = require("../services/notificationServices");
 const { setExtendedAttributes, createTarArchive } = require("../services/shellCommandServices");
+const { downloadS3Object } = require("../services/s3Services");
 
 const getNoteTitle = require("../utils/getNoteTitle");
 const { blockToMarkdown } = require("../utils/convertBlock");
@@ -82,15 +83,18 @@ const exportNote = async (req, res, next) => {
     fs.mkdirSync(tempDirectory, { recursive: true });
     fs.mkdirSync(assetsDirectory, { recursive: true });
 
-    const imagePaths = blocks
-      .filter(({ imageUrl }) => imageUrl)
-      .map(({ imageUrl }) => `public/${imageUrl}`);
-    imagePaths.forEach((imagePath) => {
-      const imageFilename = path.basename(imagePath);
-      const assetsImagePath = path.join(assetsDirectory, imageFilename);
+    const imageS3Keys = blocks
+      .filter(({ imageUrl }) => !!imageUrl && imageUrl.includes("/"))
+      .map(({ imageUrl }) => imageUrl.split("/").pop());
 
-      fs.copyFileSync(imagePath, assetsImagePath);
-    });
+    await Promise.all(
+      imageS3Keys.map(async (s3Key) => {
+        const s3Buffer = await downloadS3Object(s3Key);
+        const imageFilePath = path.join(assetsDirectory, s3Key);
+
+        fs.writeFileSync(imageFilePath, s3Buffer);
+      })
+    );
 
     const markdown = blockToMarkdown(blocks);
     const title = getNoteTitle(blocks);

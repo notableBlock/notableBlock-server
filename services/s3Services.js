@@ -1,6 +1,7 @@
 const {
   S3Client,
   CopyObjectCommand,
+  GetObjectCommand,
   DeleteObjectCommand,
   DeleteObjectsCommand,
   waitUntilObjectNotExists,
@@ -34,7 +35,26 @@ const copyS3Object = (sourceKey, fileName) => {
       newImageUrl,
     };
   } catch (err) {
-    throw new Error("S3 객체 복사에 실패했어요");
+    throw new Error("S3 객체 복사에 실패했어요.");
+  }
+};
+
+const downloadS3Object = async (sourceKey) => {
+  try {
+    const { Body } = await s3.send(
+      new GetObjectCommand({
+        Bucket: process.env.S3_BUCKET,
+        Key: sourceKey,
+      })
+    );
+
+    const byteArray = await Body.transformToByteArray();
+    const s3Buffer = Buffer.from(byteArray);
+
+    return s3Buffer;
+  } catch (err) {
+    console.log(err);
+    throw new Error("S3 객체 저장에 실패했어요.");
   }
 };
 
@@ -49,7 +69,7 @@ const deleteS3Object = async (sourceKey) => {
     await waitUntilObjectNotExists({ client: s3 }, params);
   } catch (err) {
     console.log(err);
-    throw new Error("S3 객체 삭제에 실패했어요");
+    throw new Error("S3 객체 삭제에 실패했어요.");
   }
 };
 
@@ -76,8 +96,8 @@ const deleteS3Objects = async (sourceKeys) => {
     }
   } catch (err) {
     console.log(err);
-    throw new Error("복수의 S3 객체 삭제에 실패했어요");
+    throw new Error("복수의 S3 객체 삭제에 실패했어요.");
   }
 };
 
-module.exports = { s3, copyS3Object, deleteS3Object, deleteS3Objects };
+module.exports = { s3, copyS3Object, downloadS3Object, deleteS3Object, deleteS3Objects };
