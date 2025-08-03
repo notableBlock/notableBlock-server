@@ -4,14 +4,15 @@ const createError = require("http-errors");
 const { markdownToBlocks } = require("../utils/convertBlock");
 
 const convertMarkdownToBlocks = async (req, res, next) => {
-  const mdFilePaths = req.mdFilePaths;
+  const { mdFilePaths } = req;
+  const s3UploadTargets = [];
 
   try {
     const mdFilesBlocks = await Promise.all(
       mdFilePaths.map(async (path) => {
         try {
           const markdown = await fs.promises.readFile(path, "utf-8");
-          const blocks = markdownToBlocks(markdown);
+          const blocks = markdownToBlocks(markdown, s3UploadTargets);
           await fs.promises.unlink(path);
 
           return blocks;
@@ -22,6 +23,7 @@ const convertMarkdownToBlocks = async (req, res, next) => {
     );
 
     req.mdFilesBlocks = mdFilesBlocks;
+    req.s3UploadTargets = s3UploadTargets;
     next();
   } catch (err) {
     console.log(err);

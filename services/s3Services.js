@@ -1,11 +1,13 @@
 const {
   S3Client,
-  CopyObjectCommand,
+  PutObjectCommand,
   GetObjectCommand,
+  CopyObjectCommand,
   DeleteObjectCommand,
   DeleteObjectsCommand,
   waitUntilObjectNotExists,
 } = require("@aws-sdk/client-s3");
+const fs = require("fs");
 
 const objectId = require("../utils/objectId");
 
@@ -17,25 +19,20 @@ const s3 = new S3Client({
   },
 });
 
-const copyS3Object = (sourceKey, fileName) => {
+const putS3Object = async (sourceKey, filePath) => {
   try {
-    const newKey = `${objectId()}-${fileName}`;
-    const newImageUrl = `${process.env.ASSETS_URL}/${newKey}`;
-    const encodedCopySource = `${process.env.S3_BUCKET}/${encodeURIComponent(sourceKey)}`;
-    const copyPromises = s3.send(
-      new CopyObjectCommand({
-        CopySource: encodedCopySource,
+    const putPromises = await s3.send(
+      new PutObjectCommand({
         Bucket: process.env.S3_BUCKET,
-        Key: newKey,
+        Key: sourceKey,
+        Body: fs.createReadStream(filePath),
       })
     );
 
-    return {
-      copyPromises,
-      newImageUrl,
-    };
+    return putPromises;
   } catch (err) {
-    throw new Error("S3 객체 복사에 실패했어요.");
+    console.log(err);
+    throw new Error("S3 객체 저장에 실패했어요.");
   }
 };
 
@@ -55,6 +52,28 @@ const downloadS3Object = async (sourceKey) => {
   } catch (err) {
     console.log(err);
     throw new Error("S3 객체 저장에 실패했어요.");
+  }
+};
+
+const copyS3Object = async (sourceKey, fileName) => {
+  try {
+    const newKey = `${objectId()}-${fileName}`;
+    const newImageUrl = `${process.env.ASSETS_URL}/${newKey}`;
+    const encodedCopySource = `${process.env.S3_BUCKET}/${encodeURIComponent(sourceKey)}`;
+    const copyPromises = await s3.send(
+      new CopyObjectCommand({
+        CopySource: encodedCopySource,
+        Bucket: process.env.S3_BUCKET,
+        Key: newKey,
+      })
+    );
+
+    return {
+      copyPromises,
+      newImageUrl,
+    };
+  } catch (err) {
+    throw new Error("S3 객체 복사에 실패했어요.");
   }
 };
 
@@ -100,4 +119,11 @@ const deleteS3Objects = async (sourceKeys) => {
   }
 };
 
-module.exports = { s3, copyS3Object, downloadS3Object, deleteS3Object, deleteS3Objects };
+module.exports = {
+  s3,
+  putS3Object,
+  downloadS3Object,
+  copyS3Object,
+  deleteS3Object,
+  deleteS3Objects,
+};

@@ -23,7 +23,7 @@ const blockToMarkdown = (blocks) => {
   return `${markdown.join("")}`;
 };
 
-const markdownToBlocks = (markdown) => {
+const markdownToBlocks = (markdown, s3UploadTargets) => {
   const lines = markdown.split("\n");
 
   const blocks = lines.map((line) => {
@@ -37,8 +37,11 @@ const markdownToBlocks = (markdown) => {
 
       case line.startsWith("!["):
         if (line.includes("](") && line.endsWith(")")) {
-          const imageUrl = `/uploads/images/${path.basename(line).split(")")[0]}`;
+          const originalFilename = `${path.basename(line).split(")")[0]}`;
+          const s3Key = `${objectId()}-${originalFilename}`;
+          s3UploadTargets.push({ s3Key, originalFilename });
 
+          const imageUrl = `${process.env.ASSETS_URL}/${s3Key}`;
           return { id: objectId(), tag: "img", imageUrl: imageUrl };
         }
 

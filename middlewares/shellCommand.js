@@ -18,9 +18,7 @@ const extractTar = async (req, res, next) => {
     );
   }
 
-  if (!tarFiles.length) {
-    return next(createError(400, "파일이 제공되지 않았어요."));
-  }
+  if (tarFiles.length === 0) return next(createError(400, "파일이 제공되지 않았어요."));
 
   try {
     await Promise.all(
@@ -35,13 +33,11 @@ const extractTar = async (req, res, next) => {
     const mdFiles = extractedFiles.filter((file) => file.endsWith(".md"));
 
     const imageExtensions = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg"];
-    const imageFiles = extractedFiles.filter((file) =>
-      imageExtensions.some((extension) => file.endsWith(extension))
+    const imageFilePaths = extractedFiles.filter((filepath) =>
+      imageExtensions.some((extension) => filepath.endsWith(extension))
     );
 
-    if (mdFiles.length === 0) {
-      return next(createError(404, "마크다운 파일을 찾을 수 없어요."));
-    }
+    if (mdFiles.length === 0) return next(createError(404, "마크다운 파일을 찾을 수 없어요."));
 
     const mdFileData = await Promise.all(
       mdFiles.map(async (file) => {
@@ -57,6 +53,7 @@ const extractTar = async (req, res, next) => {
           };
         } catch (err) {
           console.log(err);
+
           return {
             mdFilePath,
             extractedCreatorId: null,
@@ -73,7 +70,7 @@ const extractTar = async (req, res, next) => {
 
     req.extractedIds = extractedIds;
     req.mdFilePaths = mdFilePaths;
-    req.imageFiles = imageFiles;
+    req.imageFilePaths = imageFilePaths;
 
     next();
   } catch (err) {
