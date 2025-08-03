@@ -1,3 +1,5 @@
+const path = require("path");
+
 const Note = require("../models/Note");
 const User = require("../models/User");
 
@@ -50,12 +52,12 @@ const processImageBlock = async (blocks) => {
 
   try {
     const copyResults = await Promise.all(
-      imageBlocks.map(({ imageUrl }) => {
-        const s3Key = imageUrl.split("/").pop();
-        const dashIndex = s3Key.indexOf("-");
+      imageBlocks.map(async ({ imageUrl }) => {
+        const s3Key = path.basename(imageUrl);
+        const dashIndex = s3Key.lastIndexOf("-");
         const fileName = s3Key.substring(dashIndex + 1);
 
-        return copyS3Object(s3Key, fileName);
+        return await copyS3Object(s3Key, fileName);
       })
     );
 
