@@ -35,6 +35,57 @@ const login = async (req, res, next) => {
   }
 };
 
+const e2eLogin = async (req, res, next) => {
+  if (process.env.NODE_ENV !== "test") {
+    return next(createError(403, "E2E 테스트 환경이 아니에요."));
+  }
+
+  if (process.env.E2E_KEY && req.header("e2e-key") !== process.env.E2E_KEY) {
+    return next(createError(403, "E2E 키가 올바르지 않아요."));
+  }
+
+  const e2eWorkerIndex = Number(req.body.e2eWorkerIndex);
+
+  const MOCK_USERS = [
+    {
+      googleId: "e2e-google-id-0",
+      name: "E2E Tester 0",
+      picture: "picture",
+      email: "e2e0@test.com",
+      refresh_token: "e2e-refresh-token",
+    },
+    {
+      googleId: "e2e-google-id-1",
+      name: "E2E Tester 1",
+      picture: "picture",
+      email: "e2e1@test.com",
+      refresh_token: "e2e-refresh-token",
+    },
+  ];
+
+  const mockUser = MOCK_USERS[e2eWorkerIndex];
+
+  try {
+    const savedUser = await findUser(mockUser);
+
+    res.cookie("access_token", "e2e-access-token", {
+      httpOnly: true,
+      sameSite: "strict",
+    });
+    res.cookie("user_id", savedUser._id, {
+      httpOnly: true,
+      sameSite: "strict",
+    });
+    res.status(200).json({
+      message: "E2E 로그인에 성공했어요.",
+      profile: { name: savedUser.name, picture: savedUser.picture, userId: savedUser._id },
+    });
+  } catch (err) {
+    console.log(err);
+    next(createError(500, "E2E 로그인에 실패했어요."));
+  }
+};
+
 const logout = async (req, res, next) => {
   try {
     const { _id: userId } = req.user;
@@ -53,4 +104,4 @@ const logout = async (req, res, next) => {
   }
 };
 
-module.exports = { login, logout };
+module.exports = { login, e2eLogin, logout };

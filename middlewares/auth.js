@@ -8,6 +8,22 @@ const { oauth2Client } = require("../services/googleAuth");
 const isAuthenticated = async (req, res, next) => {
   const { access_token } = req.cookies;
 
+  if (process.env.NODE_ENV === "test" && access_token === "e2e-access-token") {
+    try {
+      const userId = req.cookies.user_id;
+      if (!userId) return next(createError(401, "E2E user_id 쿠키가 없어요."));
+
+      const user = await User.findById(userId);
+      if (!user) return next(createError(404, "E2E 유저를 찾을 수 없어요."));
+
+      req.user = user;
+      return next();
+    } catch (err) {
+      console.log(err);
+      return next(createError(500, "E2E 인증 처리 중 오류가 발생했어요."));
+    }
+  }
+
   try {
     await oauth2Client.getTokenInfo(access_token);
   } catch {
