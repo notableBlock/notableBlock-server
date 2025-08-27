@@ -8,7 +8,7 @@ const { oauth2Client } = require("../services/googleAuth");
 const isAuthenticated = async (req, res, next) => {
   const { access_token } = req.cookies;
 
-  if (process.env.NODE_ENV === "test" && access_token === "e2e-access-token") {
+  if (access_token === process.env.E2E_ACCESS_TOKEN) {
     try {
       const userId = req.cookies.user_id;
       if (!userId) return next(createError(401, "E2E user_id 쿠키가 없어요."));

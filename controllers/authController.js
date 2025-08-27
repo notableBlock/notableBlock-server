@@ -36,10 +36,6 @@ const login = async (req, res, next) => {
 };
 
 const e2eLogin = async (req, res, next) => {
-  if (process.env.NODE_ENV !== "test") {
-    return next(createError(403, "E2E 테스트 환경이 아니에요."));
-  }
-
   if (process.env.E2E_KEY && req.header("e2e-key") !== process.env.E2E_KEY) {
     return next(createError(403, "E2E 키가 올바르지 않아요."));
   }
@@ -52,14 +48,14 @@ const e2eLogin = async (req, res, next) => {
       name: "E2E Tester 0",
       picture: "picture",
       email: "e2e0@test.com",
-      refresh_token: "e2e-refresh-token",
+      refresh_token: process.env.E2E_REFRESH_TOKEN,
     },
     {
       googleId: "e2e-google-id-1",
       name: "E2E Tester 1",
       picture: "picture",
       email: "e2e1@test.com",
-      refresh_token: "e2e-refresh-token",
+      refresh_token: process.env.E2E_REFRESH_TOKEN,
     },
   ];
 
@@ -68,7 +64,7 @@ const e2eLogin = async (req, res, next) => {
   try {
     const savedUser = await findUser(mockUser);
 
-    res.cookie("access_token", "e2e-access-token", {
+    res.cookie("access_token", process.env.E2E_ACCESS_TOKEN, {
       httpOnly: true,
       sameSite: "strict",
     });
