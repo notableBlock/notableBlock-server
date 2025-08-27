@@ -40,7 +40,10 @@ const e2eLogin = async (req, res, next) => {
   if (process.env.E2E_KEY && req.header("e2e-key") !== process.env.E2E_KEY) {
     return next(createError(403, "E2E 키가 올바르지 않아요."));
   }
-
+  console.log(`🚀 ~ req.header("e2e-key") = `, req.header("e2e-key"));
+  console.log("🚀 ~ req.headers['content-type'] = ", req.headers["content-type"]);
+  console.log("🚀 ~ req.body = ", req.body);
+  console.log("🚀 ~ eq.body.e2eWorkerIndex = ", req.body.e2eWorkerIndex);
   const e2eWorkerIndex = Number(req.body.e2eWorkerIndex ?? 0);
   console.log("🚀 ~ e2eWorkerIndex = ", e2eWorkerIndex);
 
