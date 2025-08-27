@@ -36,11 +36,13 @@ const login = async (req, res, next) => {
 };
 
 const e2eLogin = async (req, res, next) => {
+  console.log("🚀 ~ e2eLogin = ");
   if (process.env.E2E_KEY && req.header("e2e-key") !== process.env.E2E_KEY) {
     return next(createError(403, "E2E 키가 올바르지 않아요."));
   }
 
-  const e2eWorkerIndex = Number(req.body.e2eWorkerIndex);
+  const e2eWorkerIndex = Number(req.body.e2eWorkerIndex ?? 0);
+  console.log("🚀 ~ e2eWorkerIndex = ", e2eWorkerIndex);
 
   const MOCK_USERS = [
     {
@@ -63,16 +65,19 @@ const e2eLogin = async (req, res, next) => {
 
   try {
     const savedUser = await findUser(mockUser);
+    console.log("🚀 ~ savedUser = ", savedUser);
 
     res.cookie("access_token", process.env.E2E_ACCESS_TOKEN, {
       httpOnly: true,
       secure: true,
-      sameSite: "none",
+      // sameSite: "none",
+      sameSite: "strict",
     });
     res.cookie("user_id", savedUser._id, {
       httpOnly: true,
       secure: true,
-      sameSite: "none",
+      // sameSite: "none",
+      sameSite: "strict",
     });
     res.status(200).json({
       message: "E2E 로그인에 성공했어요.",
@@ -87,7 +92,6 @@ const e2eLogin = async (req, res, next) => {
 const logout = async (req, res, next) => {
   try {
     const { _id: userId } = req.user;
-    console.log("🚀 ~ userId = ", userId);
 
     await User.findByIdAndUpdate(userId, { refresh_token: "" });
 
