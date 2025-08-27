@@ -66,11 +66,13 @@ const e2eLogin = async (req, res, next) => {
 
     res.cookie("access_token", process.env.E2E_ACCESS_TOKEN, {
       httpOnly: true,
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
     });
     res.cookie("user_id", savedUser._id, {
       httpOnly: true,
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
     });
     res.status(200).json({
       message: "E2E 로그인에 성공했어요.",
@@ -85,6 +87,7 @@ const e2eLogin = async (req, res, next) => {
 const logout = async (req, res, next) => {
   try {
     const { _id: userId } = req.user;
+    console.log("🚀 ~ userId = ", userId);
 
     await User.findByIdAndUpdate(userId, { refresh_token: "" });
 
