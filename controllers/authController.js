@@ -72,14 +72,12 @@ const e2eLogin = async (req, res, next) => {
 
     res.cookie("access_token", process.env.E2E_ACCESS_TOKEN, {
       httpOnly: true,
-      secure: true,
-      // sameSite: "none",
+      secure: false,
       sameSite: "strict",
     });
     res.cookie("user_id", savedUser._id, {
       httpOnly: true,
-      secure: true,
-      // sameSite: "none",
+      secure: false,
       sameSite: "strict",
     });
     res.status(200).json({
