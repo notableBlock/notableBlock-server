@@ -36,17 +36,11 @@ const login = async (req, res, next) => {
 };
 
 const e2eLogin = async (req, res, next) => {
-  console.log("🚀 ~ e2eLogin = ");
   if (process.env.E2E_KEY && req.header("e2e-key") !== process.env.E2E_KEY) {
     return next(createError(403, "E2E 키가 올바르지 않아요."));
   }
-  console.log(`🚀 ~ req.header("e2e-key") = `, req.header("e2e-key"));
-  console.log("🚀 ~ req.headers['content-type'] = ", req.headers["content-type"]);
-  console.log("🚀 ~ req.body = ", req.body);
-  console.log("🚀 ~ eq.body.e2eWorkerIndex = ", req.body.e2eWorkerIndex);
-  const e2eWorkerIndex = Number(req.body.e2eWorkerIndex ?? 0);
-  console.log("🚀 ~ e2eWorkerIndex = ", e2eWorkerIndex);
 
+  const e2eWorkerIndex = Number(req.body.e2eWorkerIndex ?? 0);
   const MOCK_USERS = [
     {
       googleId: "e2e-google-id-0",
@@ -63,12 +57,10 @@ const e2eLogin = async (req, res, next) => {
       refresh_token: process.env.E2E_REFRESH_TOKEN,
     },
   ];
-
   const mockUser = MOCK_USERS[e2eWorkerIndex];
 
   try {
     const savedUser = await findUser(mockUser);
-    console.log("🚀 ~ savedUser = ", savedUser);
 
     res.cookie("access_token", process.env.E2E_ACCESS_TOKEN, {
       httpOnly: true,

@@ -7,12 +7,10 @@ const { oauth2Client } = require("../services/googleAuth");
 
 const isAuthenticated = async (req, res, next) => {
   const { access_token } = req.cookies;
-  console.log("🚀 ~ access_token = ", access_token);
 
   if (access_token === process.env.E2E_ACCESS_TOKEN) {
     try {
       const userId = req.cookies.user_id;
-      console.log("🚀 ~ isAuthenticated userId = ", userId);
       if (!userId) return next(createError(401, "E2E user_id 쿠키가 없어요."));
 
       const user = await User.findById(userId);
@@ -25,8 +23,6 @@ const isAuthenticated = async (req, res, next) => {
       return next(createError(500, "E2E 인증 처리 중 오류가 발생했어요."));
     }
   }
-
-  console.log("🚀 ~ E2E_ACCESS_TOKEN 조건문 미통과");
 
   try {
     await oauth2Client.getTokenInfo(access_token);
@@ -61,10 +57,8 @@ const isAuthenticated = async (req, res, next) => {
 const autoLogin = async (req, res, next) => {
   try {
     const userId = req.cookies.user_id;
-    console.log("🚀 ~ autoLogin userId = ", userId);
     const user = await User.findById(userId);
     const refresh_token = user.refresh_token;
-    console.log("🚀 ~ refresh_token = ", refresh_token);
 
     if (!refresh_token) {
       return next(createError(401, "Refresh Token이 없어 재로그인이 필요해요."));
