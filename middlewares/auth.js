@@ -24,6 +24,25 @@ const isAuthenticated = async (req, res, next) => {
     }
   }
 
+  if (access_token && access_token.startsWith("guest-")) {
+    try {
+      const userId = req.cookies.user_id;
+      if (!userId) return next(createError(401, "게스트 user_id 쿠키가 없어요."));
+
+      const user = await User.findById(userId);
+      if (!user || !user.isGuest) return next(createError(401, "유효하지 않은 게스트 세션이에요."));
+
+      if (user.guestToken !== access_token) {
+        return next(createError(401, "유효하지 않은 게스트 토큰이에요."));
+      }
+
+      req.user = user;
+      return next();
+    } catch (err) {
+      return next(createError(500, "게스트 인증 처리 중 오류가 발생했어요."));
+    }
+  }
+
   try {
     await oauth2Client.getTokenInfo(access_token);
   } catch {
@@ -58,6 +77,9 @@ const autoLogin = async (req, res, next) => {
   try {
     const userId = req.cookies.user_id;
     const user = await User.findById(userId);
+
+    if (!user || user.isGuest) return false;
+
     const refresh_token = user.refresh_token;
 
     if (!refresh_token) {

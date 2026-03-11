@@ -1,5 +1,9 @@
+const crypto = require("crypto");
+
 const createError = require("http-errors");
 
+const Note = require("../models/Note");
+const Notification = require("../models/Notification");
 const User = require("../models/User");
 
 const { getGoogleUser } = require("../services/googleAuth");
@@ -82,22 +86,84 @@ const e2eLogin = async (req, res, next) => {
   }
 };
 
+const guestLogin = async (req, res, next) => {
+  try {
+    const guestId = crypto.randomUUID();
+    const guestToken = `guest-${guestId}`;
+
+    const guestUser = new User({
+      googleId: `guest-${guestId}`,
+      name: "게스트",
+      email: `guest-${guestId}@guest.notableblock`,
+      picture: "guest",
+      refresh_token: "guest",
+      isGuest: true,
+      guestToken,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
+    await guestUser.save();
+
+    const isProduction = process.env.NODE_ENV === "production";
+
+    res.cookie("access_token", guestToken, {
+      ...(isProduction && { domain: process.env.COOKIE_DOMAIN }),
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+    });
+    res.cookie("user_id", guestUser._id, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "strict",
+    });
+
+    res.status(200).json({
+      message: "게스트 로그인에 성공했어요.",
+      profile: {
+        name: guestUser.name,
+        picture: guestUser.picture,
+        userId: guestUser._id,
+        isGuest: true,
+      },
+    });
+  } catch (err) {
+    next(createError(500, "게스트 로그인에 실패했어요."));
+  }
+};
+
 const logout = async (req, res, next) => {
   try {
     const { _id: userId } = req.user;
 
-    await User.findByIdAndUpdate(userId, { refresh_token: "" });
+    if (req.user.isGuest) {
+      await Note.deleteMany({ _id: { $in: req.user.notes } });
+      await Notification.deleteMany({ recipientId: userId });
+      await User.findByIdAndDelete(userId);
+    } else {
+      await User.findByIdAndUpdate(userId, { refresh_token: "" });
+    }
 
-    res.clearCookie("access_token", {
-      domain: process.env.COOKIE_DOMAIN,
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-    });
+    if (req.user.isGuest) {
+      const isProduction = process.env.NODE_ENV === "production";
+      res.clearCookie("access_token", {
+        ...(isProduction && { domain: process.env.COOKIE_DOMAIN }),
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "strict",
+      });
+    } else {
+      res.clearCookie("access_token", {
+        domain: process.env.COOKIE_DOMAIN,
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+      });
+    }
     res.status(200).json({ message: "로그아웃에 성공했어요." });
   } catch (err) {
     next(createError(500, "로그아웃에 실패했어요."));
   }
 };
 
-module.exports = { login, e2eLogin, logout };
+module.exports = { login, e2eLogin, guestLogin, logout };
