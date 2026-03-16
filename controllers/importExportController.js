@@ -76,7 +76,8 @@ const exportNote = async (req, res, next) => {
   }
 
   try {
-    const { blocks, creatorId } = await findNoteById(noteId);
+    // isNoteOwner 미들웨어가 이미 조회한 노트를 재사용
+    const { blocks, creatorId } = req.note;
 
     const tempDirectory = path.join(process.env.TEMP_DIR || os.tmpdir(), "notableBlock-temp");
     const assetsDirectory = path.join(tempDirectory, "assets");

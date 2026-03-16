@@ -48,14 +48,8 @@ const getNotification = async (req, res, next) => {
 };
 
 const readNotification = async (req, res, next) => {
-  const { notificationId } = req.params;
-
-  try {
-    const notification = await Notification.findById(notificationId);
-    res.status(200).json(notification);
-  } catch (err) {
-    next(createError(500, "알림을 찾을 수 없어요."));
-  }
+  // isNotificationOwner 미들웨어가 이미 조회하고 소유권 검증한 알림을 재사용
+  res.status(200).json(req.notification);
 };
 
 const deleteNotification = async (req, res, next) => {

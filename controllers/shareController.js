@@ -12,12 +12,12 @@ const {
 const getNoteTitle = require("../utils/getNoteTitle");
 
 const shareNote = async (req, res, next) => {
-  const { user, params } = req;
+  const { user } = req;
   const { _id: userId, name: userName } = user;
-  const { noteId } = params;
 
   try {
-    const sharedNote = await findNoteById(noteId);
+    // isNoteOwner 미들웨어가 이미 조회한 노트를 재사용
+    const sharedNote = req.note;
     const { _id: sharedNoteId, blocks: sharedNoteBlocks, creatorId } = sharedNote;
     const title = getNoteTitle(sharedNoteBlocks);
 
@@ -64,6 +64,11 @@ const readSharedNote = async (req, res, next) => {
   try {
     const note = await findNoteById(noteId);
 
+    // 공유되지 않은 노트는 접근 불가
+    if (!note.isShared) {
+      return next(createError(403, "공유되지 않은 노트입니다."));
+    }
+
     res.status(200).json(note);
   } catch (err) {
     console.log(err);
@@ -78,6 +83,12 @@ const copySharedNote = async (req, res, next) => {
 
   try {
     const originalNote = await findNoteById(noteId);
+
+    // 공유되지 않은 노트는 복사 불가
+    if (!originalNote.isShared) {
+      return next(createError(403, "공유되지 않은 노트입니다."));
+    }
+
     const { _id: originalNoteId, creatorId, blocks: originalNoteBlocks } = originalNote;
 
     const creator = await User.findById(creatorId);

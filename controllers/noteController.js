@@ -1,5 +1,6 @@
 const path = require("path");
 const createError = require("http-errors");
+const sanitizeHtml = require("sanitize-html");
 
 const Note = require("../models/Note");
 const User = require("../models/User");
@@ -10,6 +11,16 @@ const { deleteS3Objects } = require("../services/s3Services");
 
 const getCurrentDate = require("../utils/getCurrentDate");
 const getNoteTitle = require("../utils/getNoteTitle");
+
+// 클라이언트의 EDITOR_DOMPURIFY_CONFIG와 동일한 허용 목록 — 서버-클라이언트 이중 방어
+const SANITIZE_OPTIONS = {
+  allowedTags: ["b", "i", "u", "br", "span", "a", "strong", "em", "div"],
+  allowedAttributes: {
+    a: ["href", "target", "rel"],
+    span: ["style"],
+    div: [],
+  },
+};
 
 const getUserNotes = async (req, res, next) => {
   const { user } = req;
@@ -51,15 +62,8 @@ const createNote = async (req, res, next) => {
 };
 
 const readNote = async (req, res, next) => {
-  const { noteId } = req.params;
-
-  try {
-    const note = await findNoteById(noteId);
-
-    res.status(200).json(note);
-  } catch (err) {
-    next(createError(500, "노트를 찾을 수 없어요."));
-  }
+  // isNoteOwner 미들웨어가 이미 노트를 조회하고 req.note에 저장함
+  res.status(200).json(req.note);
 };
 
 const updateNote = async (req, res, next) => {
@@ -67,14 +71,20 @@ const updateNote = async (req, res, next) => {
   const { noteId, blocks } = req.body.data;
   const { _id: blocksId } = blocks;
 
+  // 저장 전 html 필드를 정제 — XSS 이중 방어 (클라이언트: DOMPurify, 서버: sanitize-html)
+  const sanitizedBlocks = blocks.map((block) => ({
+    ...block,
+    html: block.html ? sanitizeHtml(block.html, SANITIZE_OPTIONS) : block.html,
+  }));
+
   try {
     const updatedNote = await Note.findByIdAndUpdate(
       noteId,
       {
-        blocks,
+        blocks: sanitizedBlocks,
         id: blocksId,
         updatedAt: getCurrentDate(),
-        title: getNoteTitle(blocks),
+        title: getNoteTitle(sanitizedBlocks),
         editor: name,
         editorPicture: picture,
       },
@@ -95,8 +105,8 @@ const deleteNote = async (req, res, next) => {
   const { _id: userId, notes: userNotes } = req.user;
   const { noteId } = req.params;
   try {
-    const { _id: databaseNoteId, editorId } = await Note.findById(noteId);
-    if (!databaseNoteId) return next(createError(404, "노트를 찾을 수 없어요."));
+    // isNoteOwner 미들웨어가 이미 조회한 노트를 재사용
+    const { _id: databaseNoteId, editorId } = req.note;
 
     if (userId.toString() === editorId.toString()) {
       const deletedNote = await Note.findByIdAndDelete(noteId);
