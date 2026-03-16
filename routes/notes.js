@@ -30,6 +30,10 @@ const {
 const extractTar = require("../middlewares/shellCommand");
 const saveImageFromTar = require("../middlewares/image");
 
+const validate = require("../middlewares/validate");
+const { validateNoteId, validateUpdateNote, validateImageName } = require("../middlewares/validators/noteValidators");
+const { isNoteOwner } = require("../middlewares/authorize");
+
 const importNoteMiddlewares = [
   dynamicUpload("files", "array"),
   extractTar,
@@ -41,18 +45,18 @@ const importNoteMiddlewares = [
 
 router.get("/", getUserNotes);
 router.post("/", createNote);
-router.put("/", updateNote);
+router.put("/", validateUpdateNote, validate, isNoteOwner, updateNote);
 
 router.get("/tree", getOwnedNotes);
 
-router.get("/:noteId", readNote);
-router.delete("/:noteId", deleteNote);
-router.patch("/:noteId", shareNote);
-router.post("/:noteId/images", dynamicUpload("image", "single"), uploadImageToNote);
-router.get("/:noteId/download", convertIdsToBlockchain, convertIdsToZwcIds, exportNote);
+router.get("/:noteId", validateNoteId, validate, isNoteOwner, readNote);
+router.delete("/:noteId", validateNoteId, validate, isNoteOwner, deleteNote);
+router.patch("/:noteId", validateNoteId, validate, isNoteOwner, shareNote);
+router.post("/:noteId/images", validateNoteId, validate, isNoteOwner, dynamicUpload("image", "single"), uploadImageToNote);
+router.get("/:noteId/download", validateNoteId, validate, isNoteOwner, convertIdsToBlockchain, convertIdsToZwcIds, exportNote);
 
 router.post("/uploads", ...importNoteMiddlewares, importNote);
 router.post("/uploads/archive", dynamicUpload("files", "array"), archiveUploadedFiles);
-router.delete("/images/:imageName", removeImageFromNote);
+router.delete("/images/:imageName", validateImageName, validate, removeImageFromNote);
 
 module.exports = router;
