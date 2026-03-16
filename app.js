@@ -5,6 +5,7 @@ if (process.env.NODE_ENV !== "production") {
 const createError = require("http-errors");
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const morgan = require("morgan");
 const path = require("path");
 const cookieParser = require("cookie-parser");
@@ -42,10 +43,12 @@ const corsOptions = {
 };
 app.options("*", cors(corsOptions));
 app.use(cors(corsOptions));
-app.use((req, res, next) => {
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-  next();
-});
+// helmet이 COOP 헤더를 포함한 보안 헤더 일괄 적용 (수동 COOP setHeader 대체)
+app.use(
+  helmet({
+    crossOriginOpenerPolicy: { policy: "same-origin" },
+  })
+);
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
