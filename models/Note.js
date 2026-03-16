@@ -12,9 +12,11 @@ const noteSchema = new mongoose.Schema({
     {
       _id: false,
       id: { type: String, required: true },
+      // Mongoose 레벨 enum — express-validator 검증과 이중 방어
       tag: {
         type: String,
         required: true,
+        enum: ["h1", "h2", "h3", "p", "img"],
       },
       html: {
         type: String,
