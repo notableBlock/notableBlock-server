@@ -1,7 +1,6 @@
 const { param, body } = require("express-validator");
 
-// 에디터에서 허용하는 블록 태그 목록
-const ALLOWED_BLOCK_TAGS = ["h1", "h2", "h3", "p", "img"];
+const { ALLOWED_BLOCK_TAGS } = require("../../constants/security");
 
 // :noteId 파라미터 검증 — GET/DELETE/PATCH/download 공통
 const validateNoteId = [

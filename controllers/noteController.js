@@ -12,15 +12,7 @@ const { deleteS3Objects } = require("../services/s3Services");
 const getCurrentDate = require("../utils/getCurrentDate");
 const getNoteTitle = require("../utils/getNoteTitle");
 
-// 클라이언트의 EDITOR_DOMPURIFY_CONFIG와 동일한 허용 목록 — 서버-클라이언트 이중 방어
-const SANITIZE_OPTIONS = {
-  allowedTags: ["b", "i", "u", "br", "span", "a", "strong", "em", "div"],
-  allowedAttributes: {
-    a: ["href", "target", "rel"],
-    span: ["style"],
-    div: [],
-  },
-};
+const { SANITIZE_OPTIONS } = require("../constants/security");
 
 const getUserNotes = async (req, res, next) => {
   const { user } = req;

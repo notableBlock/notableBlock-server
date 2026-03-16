@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const { ALLOWED_BLOCK_TAGS } = require("../constants/security");
+
 const { ObjectId } = mongoose.Schema.Types;
 
 const noteSchema = new mongoose.Schema({
@@ -16,7 +18,7 @@ const noteSchema = new mongoose.Schema({
       tag: {
         type: String,
         required: true,
-        enum: ["h1", "h2", "h3", "p", "img"],
+        enum: ALLOWED_BLOCK_TAGS,
       },
       html: {
         type: String,
