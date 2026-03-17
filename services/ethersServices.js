@@ -4,7 +4,12 @@ const contractABI = require("../resources/contractABI");
 const contractAddress = process.env.BLOCKCHAIN_CONTRACT_ADDRESS;
 
 const getContract = async () => {
-  const provider = new ethers.JsonRpcProvider(process.env.BLOCKCHAIN_PROVIDER);
+  const fetchRequest = new ethers.FetchRequest(process.env.BLOCKCHAIN_PROVIDER.trim());
+  fetchRequest.timeout = 10000;
+
+  const provider = new ethers.JsonRpcProvider(fetchRequest, undefined, {
+    staticNetwork: true,
+  });
 
   const signer =
     process.env.NODE_ENV === "production"

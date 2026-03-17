@@ -6,6 +6,13 @@ const { getContract, getBlockchainData } = require("../services/ethersServices")
 
 const { EMPTY_BYTES32 } = require("../utils/constants");
 
+const TRANSACTION_TIMEOUT_MS = 30000;
+
+const waitWithTimeout = (promise, ms, message) => {
+  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms));
+  return Promise.race([promise, timeout]);
+};
+
 const convertIdsToBlockchain = async (req, res, next) => {
   const { noteId } = req.params;
   const { creatorId } = await findNoteById(noteId);
@@ -20,7 +27,11 @@ const convertIdsToBlockchain = async (req, res, next) => {
         ethers.encodeBytes32String(creatorId.toString()),
         ethers.encodeBytes32String(noteId)
       );
-      await transactionResponse.wait();
+      await waitWithTimeout(
+        transactionResponse.wait(),
+        TRANSACTION_TIMEOUT_MS,
+        "블록체인 트랜잭션 확인 시간이 초과되었어요."
+      );
 
       const blockchainIds = await getBlockchainData(blockchainContract, creatorId, noteId);
       req.blockchainData = blockchainIds;
@@ -60,7 +71,11 @@ const decodeBytesIdsToBlockchainIds = async (req, res, next) => {
             ethers.encodeBytes32String(decodedNoteId)
           );
 
-          await transactionResponse.wait();
+          await waitWithTimeout(
+            transactionResponse.wait(),
+            TRANSACTION_TIMEOUT_MS,
+            "블록체인 트랜잭션 확인 시간이 초과되었어요."
+          );
         }
 
         return {
