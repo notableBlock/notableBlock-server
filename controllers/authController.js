@@ -93,7 +93,7 @@ const guestLogin = async (req, res, next) => {
 
     const guestUser = new User({
       googleId: `guest-${guestId}`,
-      name: "게스트",
+      name: `게스트_${guestId.slice(0, 4).toUpperCase()}`,
       email: `guest-${guestId}@guest.notableblock`,
       picture: "guest",
       refresh_token: "guest",
