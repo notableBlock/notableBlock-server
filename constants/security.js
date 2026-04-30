@@ -6,7 +6,7 @@ const SANITIZE_OPTIONS = {
   allowedTags: ["b", "i", "u", "br", "span", "a", "strong", "em", "div"],
   allowedAttributes: {
     a: ["href", "target", "rel"],
-    span: ["style"],
+    span: ["style", "class"],
     div: [],
   },
 };
