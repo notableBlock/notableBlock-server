@@ -1,5 +1,5 @@
 // 블록 태그 화이트리스트 — 클라이언트 constants/security.ts의 ALLOWED_BLOCK_TAGS와 동일
-const ALLOWED_BLOCK_TAGS = ["h1", "h2", "h3", "p", "img"];
+const ALLOWED_BLOCK_TAGS = ["h1", "h2", "h3", "p", "img", "code"];
 
 // sanitize-html 옵션 — 클라이언트 EDITOR_DOMPURIFY_CONFIG와 동일한 허용 범위
 const SANITIZE_OPTIONS = {
