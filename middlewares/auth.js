@@ -14,7 +14,7 @@ const isAuthenticated = async (req, res, next) => {
       if (!userId) return next(createError(401, "E2E user_id 쿠키가 없어요."));
 
       const user = await User.findById(userId);
-      if (!user) return next(createError(404, "E2E 유저를 찾을 수 없어요."));
+      if (!user) return next(createError(401, "E2E 유저 인증에 실패했어요."));
 
       req.user = user;
       return next();
@@ -63,7 +63,7 @@ const isAuthenticated = async (req, res, next) => {
     const user = await User.findOne({ googleId: sub });
 
     if (!user) {
-      return next(createError(404, "사용자를 찾을 수 없어요."));
+      return next(createError(401, "사용자 인증에 실패했어요."));
     }
 
     req.user = user;
