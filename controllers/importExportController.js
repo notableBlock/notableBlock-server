@@ -150,7 +150,7 @@ const archiveUploadedFiles = async (req, res, next) => {
   const platform = os.platform();
 
   if (!isMdFileExist) {
-    return next(createError(404, "마크다운 파일이 존재하지 않아요."));
+    return next(createError(400, "업로드된 파일에 마크다운이 포함되어 있지 않아요."));
   }
   try {
     const assetsDirectory = path.join(tempDirectory, "assets");
@@ -170,14 +170,14 @@ const archiveUploadedFiles = async (req, res, next) => {
     const tarTitle = mdFiles.map(({ name }) => path.basename(name, ".md")).join(", ");
 
     if (!tarTitle) {
-      return next(createError(404, "아카이브할 마크다운 파일이 없어요."));
+      return next(createError(400, "아카이브할 마크다운 파일이 없어요."));
     }
 
     const tarArchivePath = path.join(tempDirectory, `${tarTitle}.tar`);
     const missingFiles = filesData.filter(({ fullPath }) => !fs.existsSync(fullPath));
 
     if (missingFiles.length > 0) {
-      return next(createError(404, "아카이브할 파일이 폴더에 존재하지 않아요."));
+      return next(createError(400, "아카이브할 파일이 폴더에 존재하지 않아요."));
     }
 
     try {

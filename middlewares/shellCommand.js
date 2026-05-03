@@ -37,7 +37,8 @@ const extractTar = async (req, res, next) => {
       imageExtensions.some((extension) => filepath.endsWith(extension))
     );
 
-    if (mdFiles.length === 0) return next(createError(404, "마크다운 파일을 찾을 수 없어요."));
+    if (mdFiles.length === 0)
+      return next(createError(400, "업로드된 .tar에 마크다운 파일이 없어요."));
 
     const mdFileData = await Promise.all(
       mdFiles.map(async (file) => {
