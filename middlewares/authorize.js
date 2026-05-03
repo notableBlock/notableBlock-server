@@ -7,7 +7,7 @@ const Notification = require("../models/Notification");
 // 검증 통과 시 req.note에 노트 문서를 저장해 컨트롤러의 중복 DB 조회를 방지
 const isNoteOwner = async (req, res, next) => {
   const { user } = req;
-  const noteId = req.params.noteId || req.body?.data?.noteId;
+  const { noteId } = req.params;
 
   if (!noteId) {
     return next(createError(400, "노트 ID가 필요합니다."));

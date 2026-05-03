@@ -45,11 +45,11 @@ const importNoteMiddlewares = [
 
 router.get("/", getUserNotes);
 router.post("/", createNote);
-router.put("/", validateUpdateNote, validate, isNoteOwner, updateNote);
 
 router.get("/tree", getOwnedNotes);
 
 router.get("/:noteId", validateNoteId, validate, isNoteOwner, readNote);
+router.put("/:noteId", validateNoteId, validateUpdateNote, validate, isNoteOwner, updateNote);
 router.delete("/:noteId", validateNoteId, validate, isNoteOwner, deleteNote);
 router.patch("/:noteId", validateNoteId, validate, isNoteOwner, shareNote);
 router.post("/:noteId/images", validateNoteId, validate, isNoteOwner, dynamicUpload("image", "single"), uploadImageToNote);

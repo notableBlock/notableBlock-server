@@ -7,9 +7,8 @@ const validateNoteId = [
   param("noteId").isMongoId().withMessage("유효하지 않은 노트 ID입니다."),
 ];
 
-// PUT /notes/ — blocks 업데이트 검증
+// PUT /notes/:noteId — blocks 업데이트 검증 (noteId는 validateNoteId가 담당)
 const validateUpdateNote = [
-  body("data.noteId").isMongoId().withMessage("유효하지 않은 노트 ID입니다."),
   body("data.blocks").isArray({ min: 1 }).withMessage("블록 배열이 필요합니다."),
   body("data.blocks.*.tag")
     .isIn(ALLOWED_BLOCK_TAGS)

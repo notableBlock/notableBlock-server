@@ -60,7 +60,8 @@ const readNote = async (req, res, next) => {
 
 const updateNote = async (req, res, next) => {
   const { name, picture } = req.user;
-  const { noteId, blocks } = req.body.data;
+  const { noteId } = req.params;
+  const { blocks } = req.body.data;
   const { _id: blocksId } = blocks;
 
   // 저장 전 html 필드를 정제 — XSS 이중 방어 (클라이언트: DOMPurify, 서버: sanitize-html)
