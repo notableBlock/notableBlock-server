@@ -98,39 +98,42 @@ const deleteNote = async (req, res, next) => {
   const { noteId } = req.params;
   try {
     // isNoteOwner 미들웨어가 이미 조회한 노트를 재사용
-    const { _id: databaseNoteId, editorId } = req.note;
+    const { editorId } = req.note;
 
-    if (userId.toString() === editorId.toString()) {
-      const deletedNote = await Note.findByIdAndDelete(noteId);
-      if (!deletedNote) return next(createError(404, "삭제할 노트를 찾을 수 없어요."));
-
-      const { blocks: deletedNoteBlocks, _id: deletedNoteId } = deletedNote;
-      const title = getNoteTitle(deletedNoteBlocks);
-
-      const s3Keys = deletedNoteBlocks
-        .filter(({ tag }) => tag === "img")
-        .map(({ imageUrl }) => imageUrl.split("/").pop());
-
-      await deleteS3Objects(s3Keys);
-
-      const user = await User.findById(userId);
-      if (!user) return next(createError(404, "사용자를 찾을 수 없어요."));
-
-      const deletedNoteIndex = userNotes.indexOf(deletedNoteId);
-      if (deletedNoteIndex !== -1) {
-        user.notes.splice(deletedNoteIndex, 1);
-        await user.save();
-      }
-
-      await storeNotification({
-        recipientId: userId,
-        noteId: deletedNoteId,
-        message: "가 삭제되었어요.",
-        title,
-      });
-
-      res.status(200).json({ message: "노트를 삭제했어요." });
+    // editor 우선 정책: creator라도 editor가 아니면 삭제 권한 없음
+    if (userId.toString() !== editorId.toString()) {
+      return next(createError(403, "노트 편집자만 삭제할 수 있어요."));
     }
+
+    const deletedNote = await Note.findByIdAndDelete(noteId);
+    if (!deletedNote) return next(createError(404, "삭제할 노트를 찾을 수 없어요."));
+
+    const { blocks: deletedNoteBlocks, _id: deletedNoteId } = deletedNote;
+    const title = getNoteTitle(deletedNoteBlocks);
+
+    const s3Keys = deletedNoteBlocks
+      .filter(({ tag }) => tag === "img")
+      .map(({ imageUrl }) => imageUrl.split("/").pop());
+
+    await deleteS3Objects(s3Keys);
+
+    const user = await User.findById(userId);
+    if (!user) return next(createError(404, "사용자를 찾을 수 없어요."));
+
+    const deletedNoteIndex = userNotes.indexOf(deletedNoteId);
+    if (deletedNoteIndex !== -1) {
+      user.notes.splice(deletedNoteIndex, 1);
+      await user.save();
+    }
+
+    await storeNotification({
+      recipientId: userId,
+      noteId: deletedNoteId,
+      message: "가 삭제되었어요.",
+      title,
+    });
+
+    res.status(200).json({ message: "노트를 삭제했어요." });
   } catch (err) {
     next(createError(500, "노트를 삭제하는데 실패했어요."));
   }
