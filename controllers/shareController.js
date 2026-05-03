@@ -46,11 +46,8 @@ const shareNote = async (req, res, next) => {
 
 const getSharedNotes = async (req, res, next) => {
   try {
+    // 공유 노트 0건은 빈 배열 — 클라이언트가 empty state로 분기 처리
     const sharedNotes = await Note.find({ isShared: true });
-
-    if (!sharedNotes) {
-      return next(createError(404, "현재 공유된 노트가 없어요."));
-    }
 
     res.status(200).json({ notesId: sharedNotes.map((note) => note._id) });
   } catch (err) {
@@ -64,6 +61,10 @@ const readSharedNote = async (req, res, next) => {
   try {
     const note = await findNoteById(noteId);
 
+    if (!note) {
+      return next(createError(404, "해당 공유 노트를 찾을 수 없어요."));
+    }
+
     // 공유되지 않은 노트는 접근 불가
     if (!note.isShared) {
       return next(createError(403, "공유되지 않은 노트입니다."));
@@ -72,7 +73,7 @@ const readSharedNote = async (req, res, next) => {
     res.status(200).json(note);
   } catch (err) {
     console.log(err);
-    next(createError(500, "해당 공유 노트를 찾을 수 없어요."));
+    next(createError(500, "공유 노트를 가져오는데 실패했어요."));
   }
 };
 
@@ -83,6 +84,10 @@ const copySharedNote = async (req, res, next) => {
 
   try {
     const originalNote = await findNoteById(noteId);
+
+    if (!originalNote) {
+      return next(createError(404, "복사할 공유 노트를 찾을 수 없어요."));
+    }
 
     // 공유되지 않은 노트는 복사 불가
     if (!originalNote.isShared) {

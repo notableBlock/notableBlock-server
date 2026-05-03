@@ -35,15 +35,10 @@ const storeNote = async ({ creator, note, title, editor, baseNoteId = null }) =>
   return savedNote;
 };
 
+// 노트 부재는 null 반환 — 호출부에서 404로 분기
+// DB 연결 오류 등 진짜 예외는 그대로 throw되어 호출부 catch로 전파
 const findNoteById = async (noteId) => {
-  try {
-    const note = await Note.findById(noteId);
-    if (!note) throw new Error("소유한 노트가 없어요.");
-
-    return note;
-  } catch (err) {
-    throw new Error("노트를 찾을 수 없어요.");
-  }
+  return await Note.findById(noteId);
 };
 
 const processImageBlock = async (blocks) => {
