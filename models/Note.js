@@ -26,6 +26,11 @@ const noteSchema = new mongoose.Schema({
       imageUrl: {
         type: String,
       },
+      // todo 블록 체크 상태 (기본값 false; todo 외 블록에서는 무시)
+      checked: {
+        type: Boolean,
+        default: false,
+      },
     },
   ],
   baseNote: { type: ObjectId, ref: "Note" },
